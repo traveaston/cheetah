@@ -51,8 +51,21 @@ detectBitrate() {
   echo "$1 is a $fileformat file"
 }
 
-buildFileName() {
-  echo "test"
+# Author: Teddy Skarin
+# progressbar currentState($1) and totalState($2)
+# output: Progress: [########################################] 100%
+function progressbar {
+  # process data
+  let _progress=(${1}*100/${2}*100)/100
+  let _done=(${_progress}*4)/10
+  let _left=40-$_done
+
+  # build progressbar string lengths
+  _done=$(printf "%${_done}s")
+  _left=$(printf "%${_left}s")
+
+  # build progressbar strings and print the progressbar line
+  printf "\rProgress: [${_done// /#}${_left// /-}] ${_progress}%%"
 }
 
 # music transcoding
