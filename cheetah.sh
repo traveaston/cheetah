@@ -207,8 +207,11 @@ if [[ "$1" == "info" ]]; then
   else
     echo $fileformat
   fi
+
+  echo
+  detectBitrate "$file"
+  exit 1
 fi
-# exit 1
 
 # Exit if file doesn't exist
 [[ -f "$1" ]] && intent="file"
