@@ -226,7 +226,8 @@ fi
 if [[ "$intent" == "file" ]]; then
   detectBitrate "$1"
 elif [[ "$intent" == "dir" ]]; then
-  read -p "Bitrate to transcode folder? " bitrate
+  read -p "Bitrate to transcode folder [V0]: " bitrate
+  [[ "$bitrate" == "" ]] && bitrate="V0"
 
   transcodefolder "$bitrate"
 fi
