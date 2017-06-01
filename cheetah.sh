@@ -101,7 +101,7 @@ transcode() {
   # check if file exists then transcode
   # todo probably should ask to overwrite with a y/n/all
   [[ -f "$name.mp3" ]] && echo "File already exists: ${RED} $name.mp3 ${D}" ||
-  flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --ty "$year" --tn "$tracknumber" --tg "$genre" - "$name.mp3"
+  flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --tv TPE2="$artist" --ty "$year" --tn "$tracknumber" --tg "$genre" - "$name.mp3"
 
   progressbar $tracknumber $totaltracks
 
