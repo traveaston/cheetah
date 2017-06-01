@@ -75,12 +75,18 @@ transcode() {
       ;;
   esac
 
+  title="$(metaflac --show-tag=title "$file" | sed 's/[^=]*=//')"
+  artist="$(metaflac --show-tag=artist "$file" | sed 's/[^=]*=//')"
+  album="$(metaflac --show-tag=album "$file" | sed 's/[^=]*=//')"
+  year="$(metaflac --show-tag=date "$file" | sed 's/[^=]*=//')"
+  tracknumber="$(metaflac --show-tag=tracknumber "$file" | sed 's/[^=]*=//')"
+  genre="$(metaflac --show-tag=genre "$file" | sed 's/[^=]*=//')"
+
   # check if file exists then transcode
   # todo probably should ask to overwrite with a y/n/all
   [[ -f "$name.mp3" ]] && echo "File already exists: ${RED} $name.mp3 ${D}" ||
-  flac -cds "$file" | lame -hS $settings - "$name.mp3"
+  flac -cds "$file" | lame -hS $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --ty "$year" --tn "$tracknumber" --tg "$genre" - "$name.mp3"
 
-  # TODO copy tags from flac to mp3
   # TODO copy artwork from flac to mp3
   # TODO auto search google if art doesnt exist or is bigger than 512kb or smaller than 500x500
 }
