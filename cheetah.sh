@@ -78,7 +78,7 @@ transcode() {
   # check if file exists then transcode
   # todo probably should ask to overwrite with a y/n/all
   [[ -f "$name.mp3" ]] && echo "File already exists: ${RED} $name.mp3 ${D}" ||
-  flac -cds "$name.flac" | lame -hS $settings - "$name.mp3"
+  flac -cds "$file" | lame -hS $settings - "$name.mp3"
 
   # TODO copy tags from flac to mp3
   # TODO copy artwork from flac to mp3
