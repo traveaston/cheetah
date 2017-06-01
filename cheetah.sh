@@ -82,6 +82,9 @@ transcode() {
   tracknumber="$(metaflac --show-tag=tracknumber "$file" | sed 's/[^=]*=//')"
   genre="$(metaflac --show-tag=genre "$file" | sed 's/[^=]*=//')"
 
+  # pad track number if not 2 digits
+  [[ ${#tracknumber} == 1 ]] && tracknumber="0$tracknumber"
+
   # check if file exists then transcode
   # todo probably should ask to overwrite with a y/n/all
   [[ -f "$name.mp3" ]] && echo "File already exists: ${RED} $name.mp3 ${D}" ||
