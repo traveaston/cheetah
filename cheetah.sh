@@ -103,6 +103,8 @@ transcode() {
   [[ -f "$name.mp3" ]] && echo "File already exists: ${RED} $name.mp3 ${D}" ||
   flac -cds "$file" | lame -hS $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --ty "$year" --tn "$tracknumber" --tg "$genre" - "$name.mp3"
 
+  progressbar $tracknumber $totaltracks
+
   # TODO copy artwork from flac to mp3
   # TODO auto search google if art doesnt exist or is bigger than 512kb or smaller than 500x500
 }
@@ -112,7 +114,15 @@ transcodefolder() {
 
   [[ -z "$1" ]] && echo "${RED}Must specify bitrate [320 / V0]${D}" || {
     bitrate="$1"
+
+    totaltracks="$(ls -l *.flac | wc -l)"
+    read -p "Assuming total track count is $totaltracks? [y]: " ttconfirm
+    [[ "$ttconfirm" == "" ]] && ttconfirm="y"
+    [[ "$ttconfirm" == "y" ]] || exit 1
+
     echo "${GREEN}Transcoding all FLACs in this folder to MP3 $bitrate${D}"
+    # start progress bar
+    progressbar 0 $totaltracks
     for i in *.flac; do
       transcode $bitrate "$i";
     done
