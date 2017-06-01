@@ -113,12 +113,10 @@ transcodefolder() {
       newfolder="$newfolder [$bitrate]"
     fi
 
-    echo "${GREEN}Copying artwork and MP3s to $newfolder${D}"
-    # Copy files and suppress errors
-    rsync -a cover.* folder.* *.mp3 "$newfolder" 2>/dev/null
-
-    echo "${GREEN}Removing all MP3s from current folder${D}"
-    rm -rf *.mp3
+    echo "${GREEN}Moving files to $newfolder${D}"
+    mkdir -p "$newfolder"
+    mv *.mp3 "$newfolder"/
+    rsync -a cover.* folder.* *.jpg "$newfolder" 2>/dev/null
 
     # notify "Finished transcoding $album to MP3 $bitrate"
     echo
