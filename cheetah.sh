@@ -119,9 +119,18 @@ transcodefolder() {
     bitrate="$1"
 
     totaltracks="$(ls -l *.flac | wc -l)"
-    read -p "Assuming total track count is $totaltracks? [y]: " ttconfirm
+    read -p "Assuming total track count is ${BLUE}$totaltracks${D}? [y]: " ttconfirm
     [[ "$ttconfirm" == "" ]] && ttconfirm="y"
-    [[ "$ttconfirm" == "y" ]] || exit 1
+    if ! [[ "$ttconfirm" == "y" ]]; then
+      re='^[0-9]+$'
+      if [[ $ttconfirm =~ $re ]]; then
+        totaltracks=$ttconfirm
+        echo "Total tracks: $totaltracks"
+      else
+        echo "Type number of tracks"
+        exit 1
+      fi
+    fi
 
     echo "${GREEN}Transcoding all FLACs in this folder to MP3 $bitrate${D}"
     # start progress bar
