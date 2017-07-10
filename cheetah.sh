@@ -241,7 +241,9 @@ fi
 # echo "Intent is for ${BLUE}$intent${D}"
 
 if [[ "$intent" == "file" ]]; then
-  detectBitrate "$1"
+  read -p "Bitrate to transcode file [V0]: " bitrate
+  [[ "$bitrate" == "" ]] && bitrate="V0"
+  transcode "$bitrate" "$1"
 elif [[ "$intent" == "dir" ]]; then
   read -p "Bitrate to transcode folder [V0]: " bitrate
   [[ "$bitrate" == "" ]] && bitrate="V0"
