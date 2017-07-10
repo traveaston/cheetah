@@ -82,8 +82,11 @@ transcode() {
     V0)
       settings="-V 0"
       ;;
+    V2)
+      settings="-V 2"
+      ;;
     *)
-      echo "${RED}Must specify bitrate [320 / V0]${D}"
+      echo "${RED}Must specify bitrate [320 / V0 / V2]${D}"
       return 0
       ;;
   esac
