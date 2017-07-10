@@ -148,7 +148,9 @@ transcodefolder() {
       newfolder="$newfolder [$bitrate]"
     fi
 
-    echo "${GREEN}Moving files to $newfolder${D}"
+    # echo newline because progressbar ends without one
+    echo
+    echo "Moving files to $newfolder"
     mkdir -p "$newfolder"
     mv *.mp3 "$newfolder"/
     rsync -a cover.* folder.* *.jpg "$newfolder" 2>/dev/null
