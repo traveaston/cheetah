@@ -201,12 +201,7 @@ RED=$'\e[31;49m'
   # They want to do the current folder
   current_folder=${PWD##*/}
   echo "Assuming current folder - ${RED}$current_folder${D}?"
-  # echo "(this will fuck your shit up if you run it in the wrong place)"
   intent="dir"
-  # read -rsp $'Press any key to continue...\n' -n1 key
-  # echo "${RED}Look mate, you gotta specify a file to detect${D}"
-  # echo "cheetah file.mp3" # TODO naming
-  # exit 1
 }
 
 if [[ "$1" == "info" ]]; then
@@ -236,9 +231,6 @@ fi
   echo "\"$1\" doesn't exist in this dir, pay more attention to history before running it"
   exit 1
 }
-
-# TODO REMOVE BELOW
-# echo "Intent is for ${BLUE}$intent${D}"
 
 if [[ "$intent" == "file" ]]; then
   read -p "Bitrate to transcode file [V0]: " bitrate
