@@ -215,10 +215,9 @@ RED=$'\e[31;49m'
 # Execute main
 # cheetah
 
-# Exit if no file specified
+# Assume folder contents if no file specified
 [[ -z "$1" ]] &&
 {
-  # They want to do the current folder
   current_folder=${PWD##*/}
   echo "Assuming current folder - ${RED}$current_folder${D}?"
   intent="dir"
