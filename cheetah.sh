@@ -2,14 +2,31 @@
 # cheetah
 # transcoding tool
 
-# Dependencies:
-#   flac
-#   id3v2
-#   lame
-#   metaflac
-#   ssed
-#   mktorrent
-#   mediainfo
+# check dependencies are installed
+dependenciesOkay=true
+missingDependencies=()
+dependencies=(
+  flac
+  id3v2
+  lame
+  # metaflac is part of flac
+  ssed
+  mktorrent
+  mediainfo
+)
+
+for i in ${dependencies[@]}; do
+  if ! command -v $i >/dev/null 2>&1 ; then
+    dependenciesOkay=false
+    missingDependencies+=($i)
+  fi
+done
+
+[[ $dependenciesOkay == false ]] && {
+  printf 'Missing dependencies: %s\n' "${missingDependencies[*]}"
+  echo "Please install them before using cheetah"
+  exit
+}
 
 getInfo() {
   xml=$(mediainfo "$1" --Output=XML)
