@@ -118,6 +118,9 @@ transcode() {
   # pad track number if not 2 digits
   [[ ${#tracknumber} == 1 ]] && tracknumber="0$tracknumber"
 
+  # strip anything after second character
+  [[ ${#tracknumber} != 2 ]] && tracknumber="${tracknumber:0:2}"
+
   # check if file exists then transcode
   # todo probably should ask to overwrite with a y/n/all
   [[ -f "$name.mp3" ]] && echo "File already exists: ${RED} $name.mp3 ${D}" ||
