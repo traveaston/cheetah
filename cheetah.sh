@@ -190,17 +190,6 @@ transcodefolder() {
   }
 }
 
-gentorrent() {
-  [[ -z $1 ]] && echo "usage: gentorrent path/to/folder" ||
-  {
-    announce="https://_TRACKER_URL_/_ANNOUNCE_PASSKEY_/announce"
-    folder="$1"
-    torrent="$folder.torrent"
-
-    mktorrent -p -a $announce -o "$torrent" "$folder"
-  }
-}
-
 # Read xml files
 read_dom () {
   local IFS=\>
