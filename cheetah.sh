@@ -121,6 +121,12 @@ transcode() {
   # strip anything after second character
   [[ ${#tracknumber} != 2 ]] && tracknumber="${tracknumber:0:2}"
 
+  # Replace asterisks and slashes with dashes
+  sanitisedtitle="$(echo $title | sed 's/*/-/g' | sed 's/\//-/g')"
+
+  # Replace original filename with custom name
+  name="$tracknumber $sanitisedtitle"
+
   # check if file exists then transcode
   # todo probably should ask to overwrite with a y/n/all
   [[ -f "$name.mp3" ]] && echo "File already exists: ${RED} $name.mp3 ${D}" ||
