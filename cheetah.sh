@@ -190,6 +190,16 @@ transcodefolder() {
   }
 }
 
+function searchAlbumArt() {
+  firstTrack="$(ls *.flac | head -n 1)"
+  artist="$(metaflac --show-tag=artist "$firstTrack" | sed 's/[^=]*=//' | sed 's/ /+/g')"
+  album="$(metaflac --show-tag=album "$firstTrack" | sed 's/[^=]*=//' | sed 's/ /+/g')"
+  year="$(metaflac --show-tag=date "$firstTrack" | sed 's/[^=]*=//')"
+
+  echo "Search google for cover art:"
+  echo "https://google.com/search?safe=off&tbs=imgo%3A1%2Cisz%3Alt%2Cislt%3Aqsvga&tbm=isch&q=$album+$artist+$year"
+}
+
 # Read xml files
 read_dom () {
   local IFS=\>
@@ -258,4 +268,6 @@ elif [[ "$intent" == "dir" ]]; then
   [[ "$bitrate" == "" ]] && bitrate="V0"
 
   transcodefolder "$bitrate"
+
+  searchAlbumArt
 fi
