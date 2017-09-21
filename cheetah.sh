@@ -115,6 +115,9 @@ transcode() {
   tracknumber="$(metaflac --show-tag=tracknumber "$file" | sed 's/[^=]*=//')"
   genre="$(metaflac --show-tag=genre "$file" | sed 's/[^=]*=//')"
 
+  # change tracknumber '2/11' to '2'
+  tracknumber=$(echo $tracknumber | cut -f1 -d"/")
+
   # pad track number if not 2 digits
   [[ ${#tracknumber} == 1 ]] && tracknumber="0$tracknumber"
 
