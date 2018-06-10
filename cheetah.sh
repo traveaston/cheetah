@@ -255,7 +255,7 @@ fi
 
 [[ "$intent" == "" ]] &&
 {
-  echo "\"$1\" doesn't exist in this dir, pay more attention to history before running it"
+  echo "Cannot find file or folder \"$1\""
   exit 1
 }
 
