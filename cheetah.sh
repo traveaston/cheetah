@@ -82,7 +82,7 @@ function progressbar {
   _left=$(printf "%${_left}s")
 
   # build progressbar strings and print the progressbar line
-  printf "\rProgress: [${_done// /#}${_left// /-}] ${_progress}%%"
+  printf "\rProgress: [${_done// /#}${_left// /-}] ${_progress}%%  "
 }
 
 # music transcoding
