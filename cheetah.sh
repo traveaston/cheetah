@@ -192,8 +192,8 @@ transcodefolder() {
 
 function searchAlbumArt() {
   firstTrack="$(ls *.flac | head -n 1)"
-  artist="$(metaflac --show-tag=artist "$firstTrack" | sed 's/[^=]*=//' | sed 's/ /+/g')"
-  album="$(metaflac --show-tag=album "$firstTrack" | sed 's/[^=]*=//' | sed 's/ /+/g')"
+  artist="$(metaflac --show-tag=artist "$firstTrack" | sed 's/[^=]*=//' | sed 's/&//g' | sed 's/ /+/g')"
+  album="$(metaflac --show-tag=album "$firstTrack" | sed 's/[^=]*=//' | sed 's/&//g' | sed 's/ /+/g')"
   year="$(metaflac --show-tag=date "$firstTrack" | sed 's/[^=]*=//')"
 
   echo "Search google for cover art:"
