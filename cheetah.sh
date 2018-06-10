@@ -144,50 +144,53 @@ transcode() {
 # transcodefolder V0
 transcodefolder() {
 
-  [[ -z "$1" ]] && echo "${RED}Must specify bitrate [320 / V0]${D}" || {
-    bitrate="$1"
-
-    totaltracks="$(ls -l *.flac | wc -l)"
-    read -p "Assuming total track count is ${BLUE}$totaltracks${D}? [y]: " ttconfirm
-    [[ "$ttconfirm" == "" ]] && ttconfirm="y"
-    if ! [[ "$ttconfirm" == "y" ]]; then
-      re='^[0-9]+$'
-      if [[ $ttconfirm =~ $re ]]; then
-        totaltracks=$ttconfirm
-        echo "Total tracks: $totaltracks"
-      else
-        echo "Type number of tracks"
-        exit 1
-      fi
-    fi
-
-    echo "${GREEN}Transcoding all FLACs in this folder to MP3 $bitrate${D}"
-    # start progress bar
-    progressbar 0 $totaltracks
-    for i in *.flac; do
-      transcode $bitrate "$i";
-    done
-
-    album=${PWD##*/}
-    flacfolder=$(pwd)
-    newfolder=$(echo $flacfolder | ssed "s/FLAC/$bitrate/i")
-
-    if [[ "$flacfolder" == "$newfolder" ]]; then
-      # Original folder name didn't include "FLAC", add bitrate to new folder name
-      newfolder="$newfolder [$bitrate]"
-    fi
-
-    # echo newline because progressbar ends without one
-    echo
-    echo "Moving files to $newfolder"
-    mkdir -p "$newfolder"
-    mv *.mp3 "$newfolder"/
-    rsync -a cover.* folder.* *.jpg "$newfolder" 2>/dev/null
-
-    # notify "Finished transcoding $album to MP3 $bitrate"
-    echo
-    echo "${GREEN}Finished transcoding $album to MP3 $bitrate${D}"
+  [[ -z "$1" ]] && {
+    echo "${RED}Must specify bitrate [320 / V0]${D}"
+    exit 1
   }
+
+  bitrate="$1"
+
+  totaltracks="$(ls -l *.flac | wc -l)"
+  read -p "Assuming total track count is ${BLUE}$totaltracks${D}? [y]: " ttconfirm
+  [[ "$ttconfirm" == "" ]] && ttconfirm="y"
+  if ! [[ "$ttconfirm" == "y" ]]; then
+    re='^[0-9]+$'
+    if [[ $ttconfirm =~ $re ]]; then
+      totaltracks=$ttconfirm
+      echo "Total tracks: $totaltracks"
+    else
+      echo "Type number of tracks"
+      exit 1
+    fi
+  fi
+
+  echo "${GREEN}Transcoding all FLACs in this folder to MP3 $bitrate${D}"
+  # start progress bar
+  progressbar 0 $totaltracks
+  for i in *.flac; do
+    transcode $bitrate "$i";
+  done
+
+  album=${PWD##*/}
+  flacfolder=$(pwd)
+  newfolder=$(echo $flacfolder | ssed "s/FLAC/$bitrate/i")
+
+  if [[ "$flacfolder" == "$newfolder" ]]; then
+    # Original folder name didn't include "FLAC", add bitrate to new folder name
+    newfolder="$newfolder [$bitrate]"
+  fi
+
+  # echo newline because progressbar ends without one
+  echo
+  echo "Moving files to $newfolder"
+  mkdir -p "$newfolder"
+  mv *.mp3 "$newfolder"/
+  rsync -a cover.* folder.* *.jpg "$newfolder" 2>/dev/null
+
+  # notify "Finished transcoding $album to MP3 $bitrate"
+  echo
+  echo "${GREEN}Finished transcoding $album to MP3 $bitrate${D}"
 }
 
 function searchAlbumArt() {
