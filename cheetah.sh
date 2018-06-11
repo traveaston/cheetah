@@ -85,12 +85,14 @@ function progressbar {
   printf "\rProgress: [${_done// /#}${_left// /-}] ${_progress}%%  "
 }
 
-# music transcoding
-# transcode V0 input.flac
+# transcode V0 /path/input.flac ~/outputfolder/
 transcode() {
   settings=""
   bitrate="$1"
   file="$2"
+  folder="${3%/}" # remove trailing slash
+
+  [[ -z "$folder" ]] && folder="."
 
   case $bitrate in
     320)
@@ -125,12 +127,12 @@ transcode() {
   sanitisedtitle="$(echo $title | sed 's/[?:;*\/]/-/g')"
 
   # Replace original filename with custom name
-  name="$tracknumber $sanitisedtitle"
+  output_file="$folder/$tracknumber $sanitisedtitle.mp3"
 
   # check if file exists then transcode
   # todo probably should ask to overwrite with a y/n/all
-  [[ -f "$name.mp3" ]] && echo "File already exists: ${RED} $name.mp3 ${D}" ||
-  flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --tv TPE2="$artist" --ty "$year" --tn "$tracknumber/$totaltracks" --tg "$genre" - "$name.mp3"
+  [[ -f "$output_file" ]] && echo "File already exists: ${RED}$output_file${D}" && exit 1 ||
+  flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --tv TPE2="$artist" --ty "$year" --tn "$tracknumber/$totaltracks" --tg "$genre" - "$output_file"
 
   # TODO copy artwork from flac to mp3
   # TODO auto search google if art doesnt exist or is bigger than 512kb or smaller than 500x500
