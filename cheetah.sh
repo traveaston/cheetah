@@ -132,8 +132,6 @@ transcode() {
   [[ -f "$name.mp3" ]] && echo "File already exists: ${RED} $name.mp3 ${D}" ||
   flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --tv TPE2="$artist" --ty "$year" --tn "$tracknumber/$totaltracks" --tg "$genre" - "$name.mp3"
 
-  progressbar $tracknumber $totaltracks
-
   # TODO copy artwork from flac to mp3
   # TODO auto search google if art doesnt exist or is bigger than 512kb or smaller than 500x500
 }
@@ -159,11 +157,14 @@ transcodefolder() {
   fi
 
   echo "${GREEN}Transcoding all FLACs in this folder to MP3 $bitrate${D}"
-  # start progress bar
-  progressbar 0 $totaltracks
+
+  counter=0
   for i in *.flac; do
-    transcode $bitrate "$i";
+    progressbar $counter $totaltracks
+    transcode $bitrate "$i"
+    counter=$((counter+1))
   done
+  progressbar $counter $totaltracks && echo
 
   album=${PWD##*/}
   flacfolder=$(pwd)
@@ -174,8 +175,6 @@ transcodefolder() {
     newfolder="$newfolder [$bitrate]"
   fi
 
-  # echo newline because progressbar ends without one
-  echo
   echo "Moving files to $newfolder"
   mkdir -p "$newfolder"
   mv *.mp3 "$newfolder"/
