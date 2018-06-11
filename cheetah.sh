@@ -9,10 +9,11 @@ dependencies=(
   flac
   id3v2
   lame
-  # metaflac is part of flac
-  ssed
-  mktorrent
   mediainfo
+  # metaflac is part of flac
+  mktorrent
+  rsync
+  ssed
 )
 
 for i in ${dependencies[@]}; do
