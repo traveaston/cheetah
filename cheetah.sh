@@ -188,13 +188,11 @@ transcodefolder() {
 }
 
 function searchAlbumArt() {
-  firstTrack="$(ls *.flac | head -n 1)"
-  artist="$(metaflac --show-tag=artist "$firstTrack" | sed 's/[^=]*=//' | sed 's/&//g' | sed 's/ /+/g')"
-  album="$(metaflac --show-tag=album "$firstTrack" | sed 's/[^=]*=//' | sed 's/&//g' | sed 's/ /+/g')"
-  year="$(metaflac --show-tag=date "$firstTrack" | sed 's/[^=]*=//')"
+  # Remove illegal characters, encode spaces
+  search="$(echo "$album $artist $year" | sed 's/ /+/g' | sed 's/[?:;*&\/\\]//g')"
 
   echo "Search google for cover art:"
-  echo "https://google.com/search?safe=off&tbs=imgo%3A1%2Cisz%3Alt%2Cislt%3Aqsvga&tbm=isch&q=$album+$artist+$year"
+  echo "https://google.com/search?safe=off&tbs=imgo:1,isz:lt,islt:qsvga&tbm=isch&q=$search"
 }
 
 # Read xml files
