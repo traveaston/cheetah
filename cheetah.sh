@@ -138,53 +138,39 @@ transcode() {
   # TODO auto search google if art doesnt exist or is bigger than 512kb or smaller than 500x500
 }
 
-# transcodefolder V0
+# transcodefolder V0 source
 transcodefolder() {
   bitrate="$1"
-
   [[ -z "$bitrate" ]] && echo "${RED}Must specify bitrate [320/V0/etc]${D}" && exit 1
 
-  totaltracks="$(ls -l *.flac | wc -l)"
-  read -p "Assuming total track count is ${BLUE}$totaltracks${D}? [y]: " ttconfirm
-  [[ "$ttconfirm" == "" ]] && ttconfirm="y"
-  if ! [[ "$ttconfirm" == "y" ]]; then
-    re='^[0-9]+$'
-    if [[ $ttconfirm =~ $re ]]; then
-      totaltracks=$ttconfirm
-      echo "Total tracks: $totaltracks"
-    else
-      echo "Type number of tracks"
-      exit 1
-    fi
-  fi
+  cd "$2"
 
-  echo "${GREEN}Transcoding all FLACs in this folder to MP3 $bitrate${D}"
+  album=${PWD##*/}
+  in_path=$(pwd)
+  out_path=$(echo $in_path | ssed "s/FLAC/$bitrate/i")
+
+  # append bitrate to folder if original folder omitted "FLAC", failing substitution
+  [[ "$in_path" == "$out_path" ]] && out_path="$out_path [$bitrate]"
+
+  totaltracks=$(ls -1qU *.flac | wc -l | awk '{print $1}')
+
+  echo "Transcoding ${RED}$totaltracks${D} FLACs in ${RED}$album${D} to MP3 $bitrate"
+
+  [[ -d "$out_path" ]] && "$out_path already exists, exiting" && exit 1
+  mkdir -p "$out_path"
 
   counter=0
   for i in *.flac; do
     progressbar $counter $totaltracks
-    transcode $bitrate "$i"
+    transcode $bitrate "$i" "$out_path"
     counter=$((counter+1))
   done
   progressbar $counter $totaltracks && echo
 
-  album=${PWD##*/}
-  flacfolder=$(pwd)
-  newfolder=$(echo $flacfolder | ssed "s/FLAC/$bitrate/i")
-
-  if [[ "$flacfolder" == "$newfolder" ]]; then
-    # Original folder name didn't include "FLAC", add bitrate to new folder name
-    newfolder="$newfolder [$bitrate]"
-  fi
-
-  echo "Moving files to $newfolder"
-  mkdir -p "$newfolder"
-  mv *.mp3 "$newfolder"/
-  rsync -a cover.* folder.* *.jpg "$newfolder" 2>/dev/null
+  rsync -a cover.* folder.* *.jpg "$out_path" 2>/dev/null
 
   # notify "Finished transcoding $album to MP3 $bitrate"
-  echo
-  echo "${GREEN}Finished transcoding $album to MP3 $bitrate${D}"
+  echo "$bitrate transcode output to ${BLUE}$out_path${D}"
 }
 
 function searchAlbumArt() {
@@ -218,51 +204,45 @@ RED=$'\e[31;49m'
 # Execute main
 # cheetah
 
-# Assume folder contents if no file specified
-[[ -z "$1" ]] &&
-{
-  current_folder=${PWD##*/}
-  echo "Assuming current folder - ${RED}$current_folder${D}?"
-  intent="dir"
-}
+target=${1%/} # strip trailing slash
 
-if [[ "$1" == "info" ]]; then
+# Assume current folder if no target specified
+[[ -z "$target" ]] && target="."
+
+if [[ "$target" == "info" ]]; then {
+  # cheetah info "01 Song.flac"
   # Show tag info on the specified file
-  file="$2"
-  getInfo "$file"
+  target="$2"
+  getInfo "$target"
 
   if [[ "$fileformat" == "FLAC" ]]; then
-    metaflac --list --block-number=2 "$file"
+    metaflac --list --block-number=2 "$target"
   elif [[ "$fileformat" == "MPEG Audio" ]]; then
-    id3v2 -l "$file"
+    id3v2 -l "$target"
   else
     echo $fileformat
   fi
 
   echo
-  detectBitrate "$file"
+  detectBitrate "$target"
   exit 1
-fi
-
-# Exit if file doesn't exist
-[[ -f "$1" ]] && intent="file"
-[[ -d "$1" ]] && intent="dir"
-
-[[ "$intent" == "" ]] &&
-{
-  echo "Cannot find file or folder \"$1\""
-  exit 1
-}
-
-if [[ "$intent" == "file" ]]; then
+} elif [[ -f "$target" ]]; then {
+  # file
   read -p "Bitrate to transcode file [V0]: " bitrate
   [[ "$bitrate" == "" ]] && bitrate="V0"
-  transcode "$bitrate" "$1"
-elif [[ "$intent" == "dir" ]]; then
+
+  transcode "$bitrate" "$target" "$2"
+  echo "$bitrate transcode output to ${BLUE}$output_file${D}"
+} elif [[ -d "$target" ]]; then {
+  # folder
   read -p "Bitrate to transcode folder [V0]: " bitrate
   [[ "$bitrate" == "" ]] && bitrate="V0"
 
-  transcodefolder "$bitrate"
-
+  transcodefolder "$bitrate" "$target"
   searchAlbumArt
+} else {
+  # Exit if file doesn't exist
+  echo "Cannot find file or folder \"$target\""
+  exit 1
+}
 fi
