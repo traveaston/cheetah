@@ -110,7 +110,7 @@ transcode() {
   title="$(metaflac --show-tag=title "$file" | sed 's/[^=]*=//')"
   artist="$(metaflac --show-tag=artist "$file" | sed 's/[^=]*=//')"
   album="$(metaflac --show-tag=album "$file" | sed 's/[^=]*=//')"
-  year="$(metaflac --show-tag=date "$file" | sed 's/[^=]*=//')"
+  year="$(metaflac --show-tag=date "$file" | sed 's/[^=]*=//' | sed -E 's/^([0-9]{4}).*$/\1/')" # ensure year is 4 digits
   tracknumber="$(metaflac --show-tag=tracknumber "$file" | sed 's/[^=]*=//')"
   genre="$(metaflac --show-tag=genre "$file" | sed 's/[^=]*=//')"
 
