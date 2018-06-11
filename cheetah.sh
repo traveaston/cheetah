@@ -89,15 +89,15 @@ function progressbar {
 # transcode V0 input.flac
 transcode() {
   settings=""
-  file=$(basename "$2")
-  name="${file%.*}"
+  bitrate="$1"
+  file="$2"
 
-  case $1 in
+  case $bitrate in
     320)
       settings="--cbr -b 320"
       ;;
     v*|V*)
-      settings="-V ${1:1:2}"
+      settings="-V ${bitrate:1:2}"
       ;;
     *)
       echo "${RED}Must specify bitrate [320/V0/etc]${D}"
@@ -121,8 +121,8 @@ transcode() {
   # strip anything after second character
   [[ ${#tracknumber} != 2 ]] && tracknumber="${tracknumber:0:2}"
 
-  # Replace asterisks and slashes with dashes
-  sanitisedtitle="$(echo $title | sed 's/*/-/g' | sed 's/\//-/g')"
+  # Replace illegal characters with dash
+  sanitisedtitle="$(echo $title | sed 's/[?:;*\/]/-/g')"
 
   # Replace original filename with custom name
   name="$tracknumber $sanitisedtitle"
