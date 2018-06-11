@@ -96,15 +96,12 @@ transcode() {
     320)
       settings="--cbr -b 320"
       ;;
-    V0)
-      settings="-V 0"
-      ;;
-    V2)
-      settings="-V 2"
+    v*|V*)
+      settings="-V ${1:1:2}"
       ;;
     *)
-      echo "${RED}Must specify bitrate [320 / V0 / V2]${D}"
-      return 0
+      echo "${RED}Must specify bitrate [320/V0/etc]${D}"
+      exit 1
       ;;
   esac
 
@@ -143,13 +140,9 @@ transcode() {
 
 # transcodefolder V0
 transcodefolder() {
-
-  [[ -z "$1" ]] && {
-    echo "${RED}Must specify bitrate [320 / V0]${D}"
-    exit 1
-  }
-
   bitrate="$1"
+
+  [[ -z "$bitrate" ]] && echo "${RED}Must specify bitrate [320/V0/etc]${D}" && exit 1
 
   totaltracks="$(ls -l *.flac | wc -l)"
   read -p "Assuming total track count is ${BLUE}$totaltracks${D}? [y]: " ttconfirm
