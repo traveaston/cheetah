@@ -155,7 +155,8 @@ transcodefolder() {
 
   totaltracks=$(ls -1qU *.flac | wc -l | awk '{print $1}')
 
-  [[ -d "$out_path" ]] && "$out_path already exists, exiting" && exit 1
+  # if directory already exists, ensure it's empty
+  [[ -d "$out_path" ]] && [[ "$(ls -A "$out_path")" ]] && echo "${RED}$out_path${D} already exists, exiting" && exit 1
   mkdir -p "$out_path"
 
   echo "Transcoding ${RED}$totaltracks${D} FLACs in ${RED}$album${D} to MP3 $bitrate"
