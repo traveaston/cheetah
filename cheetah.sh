@@ -155,11 +155,10 @@ transcodefolder() {
 
   totaltracks=$(ls -1qU *.flac | wc -l | awk '{print $1}')
 
-  echo "Transcoding ${RED}$totaltracks${D} FLACs in ${RED}$album${D} to MP3 $bitrate"
-
   [[ -d "$out_path" ]] && "$out_path already exists, exiting" && exit 1
   mkdir -p "$out_path"
 
+  echo "Transcoding ${RED}$totaltracks${D} FLACs in ${RED}$album${D} to MP3 $bitrate"
   counter=0
   for i in *.flac; do
     progressbar $counter $totaltracks
