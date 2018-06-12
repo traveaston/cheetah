@@ -132,13 +132,9 @@ transcode() {
   # Replace original filename with custom name
   output_file="$folder/$tracknumber $sanitisedtitle.mp3"
 
-  # check if file exists then transcode
-  # todo probably should ask to overwrite with a y/n/all
+  # ensure file doesn't already exist
   [[ -f "$output_file" ]] && echo "File already exists: ${RED}$output_file${D}" && exit 1 ||
   flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --tv TPE2="$artist" --ty "$year" --tn "$tracknumber/$totaltracks" --tg "$genre" - "$output_file"
-
-  # TODO copy artwork from flac to mp3
-  # TODO auto search google if art doesnt exist or is bigger than 512kb or smaller than 500x500
 }
 
 # transcodefolder V0 source
