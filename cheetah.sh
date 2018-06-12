@@ -95,6 +95,8 @@ transcode() {
 
   [[ -z "$folder" ]] && folder="."
 
+  [[ ! -w "$folder" ]] && echo "directory ${RED}$folder${D} is not writable, exiting" && exit 1
+
   case $bitrate in
     320)
       settings="--cbr -b 320"
@@ -158,6 +160,8 @@ transcodefolder() {
   # if directory already exists, ensure it's empty
   [[ -d "$out_path" ]] && [[ "$(ls -A "$out_path")" ]] && echo "${RED}$out_path${D} already exists, exiting" && exit 1
   mkdir -p "$out_path"
+
+  [[ ! -w "$out_path" ]] && echo "directory ${RED}$out_path${D} is not writable, exiting" && exit 1
 
   echo "Transcoding ${RED}$totaltracks${D} FLACs in ${RED}$album${D} to MP3 $bitrate"
   counter=0
