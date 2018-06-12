@@ -210,7 +210,7 @@ target=${1%/} # strip trailing slash
 # Assume current folder if no target specified
 [[ -z "$target" ]] && target="."
 
-if [[ "$target" == "info" ]]; then {
+if [[ "$target" == "info" ]]; then
   # cheetah info "01 Song.flac"
   # Show tag info on the specified file
   target="$2"
@@ -227,23 +227,22 @@ if [[ "$target" == "info" ]]; then {
   echo
   detectBitrate "$target"
   exit 1
-} elif [[ -f "$target" ]]; then {
+elif [[ -f "$target" ]]; then
   # file
   read -p "Bitrate to transcode file [V0]: " bitrate
   [[ "$bitrate" == "" ]] && bitrate="V0"
 
   transcode "$bitrate" "$target" "$2"
   echo "$bitrate transcode output to ${BLUE}$output_file${D}"
-} elif [[ -d "$target" ]]; then {
+elif [[ -d "$target" ]]; then
   # folder
   read -p "Bitrate to transcode folder [V0]: " bitrate
   [[ "$bitrate" == "" ]] && bitrate="V0"
 
   transcodefolder "$bitrate" "$target"
   searchAlbumArt
-} else {
+else
   # Exit if file doesn't exist
   echo "Cannot find file or folder \"$target\""
   exit 1
-}
 fi
