@@ -153,6 +153,19 @@ transcodefolder() {
 
   totaltracks=$(ls -1qU *.flac | wc -l | awk '{print $1}')
 
+  # ensure there are files to transcode
+  [[ $totaltracks == 0 ]] && {
+    echo "${RED}No FLACs found. For multiple discs, run cheetah on each disc individually${D}"
+
+    # echo sample commands for multiple discs
+    find * -type d -print0 | while read -d $'\0' disc
+    do
+      echo "${BLUE}cheetah \"$album/$disc\"${D}"
+    done
+
+    exit
+  }
+
   # if directory already exists, ensure it's empty
   [[ -d "$out_path" ]] && [[ "$(ls -A "$out_path")" ]] && echo "${RED}$out_path${D} already exists, exiting" && exit 1
   mkdir -p "$out_path"
