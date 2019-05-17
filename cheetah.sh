@@ -88,10 +88,13 @@ function progressbar {
 
 # transcode V0 /path/input.flac ~/outputfolder/
 transcode() {
-  settings=""
-  bitrate="$1"
-  file="$2"
-  folder="${3%/}" # remove trailing slash
+  local title artist album year tracknumber genre
+  local main_artist feat_artist
+  local output_file sanitisedtitle settings
+
+  local bitrate="$1"
+  local file="$2"
+  local folder="${3%/}" # remove trailing slash
 
   [[ -z "$folder" ]] && folder="."
 
@@ -125,6 +128,17 @@ transcode() {
 
   # strip anything after second character
   [[ ${#tracknumber} != 2 ]] && tracknumber="${tracknumber:0:2}"
+
+  # check bool, move featured artists into title (split by comma)
+  [[ $split_featured && $artist == *','* ]] && {
+    main_artist="${artist%%,*}"
+    feat_artist="${artist#*,}"
+
+    artist="$main_artist"
+
+    # add features to title, and squash multiple spaces
+    title="$(echo "$title (feat. $feat_artist)" | awk '{$1=$1;print}')"
+  }
 
   # Replace illegal characters with dash
   sanitisedtitle="$(echo $title | sed 's/[?:;*\/]/-/g')"
@@ -219,6 +233,7 @@ RED=$'\e[31;49m'
 # cheetah
 
 target=${1%/} # strip trailing slash
+split_featured=true
 
 # Assume current folder if no target specified
 [[ -z "$target" ]] && target="."
@@ -251,6 +266,13 @@ elif [[ -d "$target" ]]; then
   # folder
   read -p "Bitrate to transcode folder [V0]: " bitrate
   [[ "$bitrate" == "" ]] && bitrate="V0"
+
+  # strip everything after " - " (leaving only the artist) and check for commas
+  # ensures "I, Robot" isn't formatted as "I - title (feat. Robot)"
+  [[ "${target%%* - }" == *','* ]] && {
+    read -p "Artist seems to contain a comma, still split artists for feat. by comma? [y/N] " confirm_split
+    [[ $confirm_split != "y" ]] && echo "not splitting artists" && unset split_featured
+  }
 
   transcodefolder "$bitrate" "$target"
   searchAlbumArt
