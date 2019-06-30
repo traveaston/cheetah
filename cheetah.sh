@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # cheetah
 # transcoding tool
 
@@ -16,10 +16,10 @@ dependencies=(
   ssed
 )
 
-for i in ${dependencies[@]}; do
-  if ! command -v $i >/dev/null 2>&1 ; then
+for i in "${dependencies[@]}"; do
+  if ! command -v "$i" >/dev/null 2>&1 ; then
     dependenciesOkay=false
-    missingDependencies+=($i)
+    missingDependencies+=("$i")
   fi
 done
 
@@ -31,7 +31,7 @@ done
 
 getInfo() {
   xml=$(mediainfo "$1" --Output=XML)
-  echo $xml > /tmp/cheetah.xml
+  echo "$xml" > /tmp/cheetah.xml
 
   while read_dom; do
     case $ENTITY in
@@ -72,11 +72,11 @@ detectBitrate() {
 # Author: Teddy Skarin
 # progressbar currentState($1) and totalState($2)
 # output: Progress: [########################################] 100%
-function progressbar {
+progressbar() {
   # process data
-  let _progress=(10#${1}*100/${2})
-  let _done=(${_progress}*4)/10
-  let _left=40-$_done
+  local _progress=$(( 10#${1}*100/${2} ))
+  local _done=$(( (${_progress}*4)/10 ))
+  local _left=$(( 40-$_done ))
 
   # build progressbar string lengths
   _done=$(printf "%${_done}s")
@@ -121,7 +121,7 @@ transcode() {
   genre="$(metaflac --show-tag=genre "$file" | sed 's/[^=]*=//')"
 
   # change tracknumber '2/11' to '2'
-  tracknumber=$(echo $tracknumber | cut -f1 -d"/")
+  tracknumber=$(echo "$tracknumber" | cut -f1 -d"/")
 
   # pad track number if not 2 digits
   [[ ${#tracknumber} == 1 ]] && tracknumber="0$tracknumber"
@@ -141,14 +141,18 @@ transcode() {
   }
 
   # Replace illegal characters with dash
-  sanitisedtitle="$(echo $title | sed 's/[?:;*\/]/-/g')"
+  sanitisedtitle="$(echo "$title" | sed 's/[?:;*\/]/-/g')"
 
   # Replace original filename with custom name
   output_file="$folder/$tracknumber $sanitisedtitle.mp3"
 
-  # ensure file doesn't already exist
-  [[ -f "$output_file" ]] && echo "File already exists: ${RED}$output_file${D}" && exit 1 ||
-  flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --tv TPE2="$artist" --ty "$year" --tn "$tracknumber/$totaltracks" --tg "$genre" - "$output_file"
+  if [[ -f "$output_file" ]]; then
+    echo "File already exists: ${RED}$output_file${D}"
+    exit 1
+  else
+    # shellcheck disable=SC2086 # $settings var is multiple flags, quotes are unfavorable
+    flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --tv TPE2="$artist" --ty "$year" --tn "$tracknumber/$totaltracks" --tg "$genre" - "$output_file"
+  fi
 }
 
 # transcodefolder V0 source
@@ -160,7 +164,7 @@ transcodefolder() {
 
   album=${PWD##*/}
   in_path=$(pwd)
-  out_path=$(echo $in_path | ssed "s/FLAC/$bitrate/i")
+  out_path=$(echo "$in_path" | ssed "s/FLAC/$bitrate/i")
 
   # append bitrate to folder if original folder omitted "FLAC", failing substitution
   [[ "$in_path" == "$out_path" ]] && out_path="$out_path [$bitrate]"
@@ -189,11 +193,11 @@ transcodefolder() {
   echo "Transcoding ${RED}$totaltracks${D} FLACs in ${RED}$album${D} to MP3 $bitrate"
   counter=0
   for i in *.flac; do
-    progressbar $counter $totaltracks
-    transcode $bitrate "$i" "$out_path"
-    counter=$((counter+1))
+    progressbar $counter "$totaltracks"
+    transcode "$bitrate" "$i" "$out_path"
+    counter=$(( counter+1 ))
   done
-  progressbar $counter $totaltracks && echo
+  progressbar $counter "$totaltracks" && echo
 
   rsync -a cover.* folder.* *.jpg "$out_path" 2>/dev/null
 
@@ -201,7 +205,7 @@ transcodefolder() {
   echo "$bitrate transcode output to ${BLUE}$out_path${D}"
 }
 
-function searchAlbumArt() {
+searchAlbumArt() {
   # Remove illegal characters, encode spaces
   search="$(echo "$album $artist $year" | sed 's/ /+/g' | sed 's/[?:;*&\/\\]//g')"
 
@@ -223,10 +227,7 @@ regexNumOnly() {
 # Colours
 D=$'\e[37;49m'
 BLUE=$'\e[34;49m'
-CYAN=$'\e[36;49m'
 GREEN=$'\e[32;49m'
-ORANGE=$'\e[33;49m'
-PINK=$'\e[35;49m'
 RED=$'\e[31;49m'
 
 # Execute main
@@ -249,7 +250,7 @@ if [[ "$target" == "info" ]]; then
   elif [[ "$fileformat" == "MPEG Audio" ]]; then
     id3v2 -l "$target"
   else
-    echo $fileformat
+    echo "$fileformat"
   fi
 
   echo
