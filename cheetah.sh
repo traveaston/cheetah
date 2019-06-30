@@ -172,7 +172,7 @@ transcodefolder() {
     echo "${RED}No FLACs found. For multiple discs, run cheetah on each disc individually${D}"
 
     # echo sample commands for multiple discs
-    find * -type d -print0 | while read -d $'\0' disc
+    find * -type d -print0 | while read -r -d $'\0' disc
     do
       echo "${BLUE}cheetah \"$album/$disc\"${D}"
     done
@@ -212,7 +212,7 @@ function searchAlbumArt() {
 # Read xml files
 read_dom () {
   local IFS=\>
-  read -d \< ENTITY CONTENT
+  read -r -d \< ENTITY CONTENT
 }
 
 # Regex remove any char not numeric
@@ -257,20 +257,20 @@ if [[ "$target" == "info" ]]; then
   exit 1
 elif [[ -f "$target" ]]; then
   # file
-  read -p "Bitrate to transcode file [V0]: " bitrate
+  read -r -p "Bitrate to transcode file [V0]: " bitrate
   [[ "$bitrate" == "" ]] && bitrate="V0"
 
   transcode "$bitrate" "$target" "$2"
   echo "$bitrate transcode output to ${BLUE}$output_file${D}"
 elif [[ -d "$target" ]]; then
   # folder
-  read -p "Bitrate to transcode folder [V0]: " bitrate
+  read -r -p "Bitrate to transcode folder [V0]: " bitrate
   [[ "$bitrate" == "" ]] && bitrate="V0"
 
   # strip everything after " - " (leaving only the artist) and check for commas
   # ensures "I, Robot" isn't formatted as "I - title (feat. Robot)"
   [[ "${target%%* - }" == *','* ]] && {
-    read -p "Artist seems to contain a comma, still split artists for feat. by comma? [y/N] " confirm_split
+    read -r -p "Artist seems to contain a comma, still split artists for feat. by comma? [y/N] " confirm_split
     [[ $confirm_split != "y" ]] && echo "not splitting artists" && unset split_featured
   }
 
