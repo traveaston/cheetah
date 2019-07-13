@@ -2,31 +2,32 @@
 # cheetah
 # transcoding tool
 
-# check dependencies are installed
-dependencies_okay=true
-missing_dependencies=()
-dependencies=(
-  flac
-  id3v2
-  lame
-  mediainfo
-  # metaflac is part of flac
-  mktorrent
-  rsync
-  ssed
-)
+check_dependencies() {
+  local dependency dependencies missing_dependencies
 
-for i in "${dependencies[@]}"; do
-  if ! command -v "$i" >/dev/null 2>&1 ; then
-    dependencies_okay=false
-    missing_dependencies+=("$i")
-  fi
-done
+  missing_dependencies=()
+  dependencies=(
+    flac
+    id3v2
+    lame
+    mediainfo
+    # metaflac is part of flac
+    mktorrent
+    rsync
+    ssed
+  )
 
-[[ $dependencies_okay == false ]] && {
-  printf 'Missing dependencies: %s\n' "${missing_dependencies[*]}"
-  echo "Please install them before using cheetah"
-  exit
+  for dependency in "${dependencies[@]}"; do
+    if ! command -v "$dependency" >/dev/null 2>&1; then
+      missing_dependencies+=("$dependency")
+    fi
+  done
+
+  [[ ${#missing_dependencies[@]} -ne 0 ]] && {
+    printf 'Missing dependencies: %s\n' "${missing_dependencies[*]}"
+    echo "Please install them before using cheetah"
+    exit
+  }
 }
 
 get_info() {
@@ -224,14 +225,17 @@ regex_num_only() {
   echo "$@" | sed 's/[^0-9]*//g'
 }
 
+# Execute main
+# cheetah
+
 # Colours
 D=$'\e[37;49m'
 BLUE=$'\e[34;49m'
 GREEN=$'\e[32;49m'
 RED=$'\e[31;49m'
 
-# Execute main
-# cheetah
+# ensure dependencies are installed or exit
+check_dependencies
 
 target=${1%/} # strip trailing slash
 split_featured=true
