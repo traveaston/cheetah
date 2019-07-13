@@ -3,8 +3,8 @@
 # transcoding tool
 
 # check dependencies are installed
-dependenciesOkay=true
-missingDependencies=()
+dependencies_okay=true
+missing_dependencies=()
 dependencies=(
   flac
   id3v2
@@ -18,18 +18,18 @@ dependencies=(
 
 for i in "${dependencies[@]}"; do
   if ! command -v "$i" >/dev/null 2>&1 ; then
-    dependenciesOkay=false
-    missingDependencies+=("$i")
+    dependencies_okay=false
+    missing_dependencies+=("$i")
   fi
 done
 
-[[ $dependenciesOkay == false ]] && {
-  printf 'Missing dependencies: %s\n' "${missingDependencies[*]}"
+[[ $dependencies_okay == false ]] && {
+  printf 'Missing dependencies: %s\n' "${missing_dependencies[*]}"
   echo "Please install them before using cheetah"
   exit
 }
 
-getInfo() {
+get_info() {
   xml=$(mediainfo "$1" --Output=XML)
   echo "$xml" > /tmp/cheetah.xml
 
@@ -45,19 +45,19 @@ getInfo() {
         fileformat="$CONTENT"
         ;;
       "Overall_bit_rate")
-        bitrate=$(regexNumOnly "$CONTENT")
+        bitrate=$(regex_num_only "$CONTENT")
         ;;
     esac
   done < /tmp/cheetah.xml
 }
 
-detectBitrate() {
+detect_bitrate() {
   # reset all detected fields
   bitrate=""
   brtype="" # bit rate type: CBR/VBR
   encoding=""
 
-  getInfo "$1"
+  get_info "$1"
 
   [[ $encoding == "" ]] && encoding="_blank_"
 
@@ -70,27 +70,27 @@ detectBitrate() {
 }
 
 # Author: Teddy Skarin
-# progressbar currentState($1) and totalState($2)
+# progress_bar currentState($1) and totalState($2)
 # output: Progress: [########################################] 100%
-progressbar() {
+progress_bar() {
   # process data
   local _progress=$(( 10#${1}*100/${2} ))
   local _done=$(( (${_progress}*4)/10 ))
   local _left=$(( 40-$_done ))
 
-  # build progressbar string lengths
+  # build progress_bar string lengths
   _done=$(printf "%${_done}s")
   _left=$(printf "%${_left}s")
 
-  # build progressbar strings and print the progressbar line
+  # build progress_bar strings and print the progress_bar line
   printf "\rProgress: [${_done// /#}${_left// /-}] ${_progress}%%  "
 }
 
 # transcode V0 /path/input.flac ~/outputfolder/
 transcode() {
-  local title artist album year tracknumber genre
+  local title artist album year track_number genre
   local main_artist feat_artist
-  local output_file sanitisedtitle settings
+  local output_file sanitised_title settings
 
   local bitrate="$1"
   local file="$2"
@@ -117,17 +117,17 @@ transcode() {
   artist="$(metaflac --show-tag=artist "$file" | sed 's/[^=]*=//')"
   album="$(metaflac --show-tag=album "$file" | sed 's/[^=]*=//')"
   year="$(metaflac --show-tag=date "$file" | sed 's/[^=]*=//' | sed -E 's/^([0-9]{4}).*$/\1/')" # ensure year is 4 digits
-  tracknumber="$(metaflac --show-tag=tracknumber "$file" | sed 's/[^=]*=//')"
+  track_number="$(metaflac --show-tag=tracknumber "$file" | sed 's/[^=]*=//')"
   genre="$(metaflac --show-tag=genre "$file" | sed 's/[^=]*=//')"
 
-  # change tracknumber '2/11' to '2'
-  tracknumber=$(echo "$tracknumber" | cut -f1 -d"/")
+  # change track_number '2/11' to '2'
+  track_number=$(echo "$track_number" | cut -f1 -d"/")
 
   # pad track number if not 2 digits
-  [[ ${#tracknumber} == 1 ]] && tracknumber="0$tracknumber"
+  [[ ${#track_number} == 1 ]] && track_number="0$track_number"
 
   # strip anything after second character
-  [[ ${#tracknumber} != 2 ]] && tracknumber="${tracknumber:0:2}"
+  [[ ${#track_number} != 2 ]] && track_number="${track_number:0:2}"
 
   # check bool, move featured artists into title (split by comma)
   [[ $split_featured && $artist == *','* ]] && {
@@ -141,22 +141,22 @@ transcode() {
   }
 
   # Replace illegal characters with dash
-  sanitisedtitle="$(echo "$title" | sed 's/[?:;*\/]/-/g')"
+  sanitised_title="$(echo "$title" | sed 's/[?:;*\/]/-/g')"
 
   # Replace original filename with custom name
-  output_file="$folder/$tracknumber $sanitisedtitle.mp3"
+  output_file="$folder/$track_number $sanitised_title.mp3"
 
   if [[ -f "$output_file" ]]; then
     echo "File already exists: ${RED}$output_file${D}"
     exit 1
   else
     # shellcheck disable=SC2086 # $settings var is multiple flags, quotes are unfavorable
-    flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --tv TPE2="$artist" --ty "$year" --tn "$tracknumber/$totaltracks" --tg "$genre" - "$output_file"
+    flac -cds "$file" | lame -h --silent $settings --add-id3v2 --tt "$title" --ta "$artist" --tl "$album" --tv TPE2="$artist" --ty "$year" --tn "$track_number/$total_tracks" --tg "$genre" - "$output_file"
   fi
 }
 
-# transcodefolder V0 source
-transcodefolder() {
+# transcode_folder V0 source
+transcode_folder() {
   bitrate="$1"
   [[ -z "$bitrate" ]] && echo "${RED}Must specify bitrate [320/V0/etc]${D}" && exit 1
 
@@ -169,10 +169,10 @@ transcodefolder() {
   # append bitrate to folder if original folder omitted "FLAC", failing substitution
   [[ "$in_path" == "$out_path" ]] && out_path="$out_path [$bitrate]"
 
-  totaltracks=$(ls -1qU *.flac | wc -l | awk '{print $1}')
+  total_tracks=$(ls -1qU *.flac | wc -l | awk '{print $1}')
 
   # ensure there are files to transcode
-  [[ $totaltracks == 0 ]] && {
+  [[ $total_tracks == 0 ]] && {
     echo "${RED}No FLACs found. For multiple discs, run cheetah on each disc individually${D}"
 
     # echo sample commands for multiple discs
@@ -190,14 +190,14 @@ transcodefolder() {
 
   [[ ! -w "$out_path" ]] && echo "directory ${RED}$out_path${D} is not writable, exiting" && exit 1
 
-  echo "Transcoding ${RED}$totaltracks${D} FLACs in ${RED}$album${D} to MP3 $bitrate"
+  echo "Transcoding ${RED}$total_tracks${D} FLACs in ${RED}$album${D} to MP3 $bitrate"
   counter=0
   for i in *.flac; do
-    progressbar $counter "$totaltracks"
+    progress_bar $counter "$total_tracks"
     transcode "$bitrate" "$i" "$out_path"
     counter=$(( counter+1 ))
   done
-  progressbar $counter "$totaltracks" && echo
+  progress_bar $counter "$total_tracks" && echo
 
   rsync -a cover.* folder.* *.jpg "$out_path" 2>/dev/null
 
@@ -205,7 +205,7 @@ transcodefolder() {
   echo "$bitrate transcode output to ${BLUE}$out_path${D}"
 }
 
-searchAlbumArt() {
+search_album_art() {
   # Remove illegal characters, encode spaces
   search="$(echo "$album $artist $year" | sed 's/ /+/g' | sed 's/[?:;*&\/\\]//g')"
 
@@ -220,7 +220,7 @@ read_dom () {
 }
 
 # Regex remove any char not numeric
-regexNumOnly() {
+regex_num_only() {
   echo "$@" | sed 's/[^0-9]*//g'
 }
 
@@ -243,7 +243,7 @@ if [[ "$target" == "info" ]]; then
   # cheetah info "01 Song.flac"
   # Show tag info on the specified file
   target="$2"
-  getInfo "$target"
+  get_info "$target"
 
   if [[ "$fileformat" == "FLAC" ]]; then
     metaflac --list --block-number=2 "$target"
@@ -254,7 +254,7 @@ if [[ "$target" == "info" ]]; then
   fi
 
   echo
-  detectBitrate "$target"
+  detect_bitrate "$target"
   exit 1
 elif [[ -f "$target" ]]; then
   # file
@@ -275,8 +275,8 @@ elif [[ -d "$target" ]]; then
     [[ $confirm_split != "y" ]] && echo "not splitting artists" && unset split_featured
   }
 
-  transcodefolder "$bitrate" "$target"
-  searchAlbumArt
+  transcode_folder "$bitrate" "$target"
+  search_album_art
 else
   # Exit if file doesn't exist
   echo "Cannot find file or folder \"$target\""
