@@ -5,6 +5,13 @@
 check_dependencies() {
   local dependency dependencies missing_dependencies
 
+  # only require ssed if sed doesn't support case-insensitive matching
+  if sed 's/foo/bar/i' /dev/null >/dev/null 2>&1; then
+      _sed='sed'
+  else
+      _sed='ssed'
+  fi
+
   missing_dependencies=()
   dependencies=(
     flac
@@ -14,7 +21,7 @@ check_dependencies() {
     # metaflac is part of flac
     mktorrent
     rsync
-    ssed
+    $_sed # $_sed or $_sed depeding on case support
   )
 
   for dependency in "${dependencies[@]}"; do
@@ -114,12 +121,12 @@ transcode() {
       ;;
   esac
 
-  title="$(metaflac --show-tag=title "$file" | sed 's/[^=]*=//')"
-  artist="$(metaflac --show-tag=artist "$file" | sed 's/[^=]*=//')"
-  album="$(metaflac --show-tag=album "$file" | sed 's/[^=]*=//')"
-  year="$(metaflac --show-tag=date "$file" | sed 's/[^=]*=//' | sed -E 's/^([0-9]{4}).*$/\1/')" # ensure year is 4 digits
-  track_number="$(metaflac --show-tag=tracknumber "$file" | sed 's/[^=]*=//')"
-  genre="$(metaflac --show-tag=genre "$file" | sed 's/[^=]*=//')"
+  title="$(metaflac --show-tag=title "$file" | $_sed 's/[^=]*=//')"
+  artist="$(metaflac --show-tag=artist "$file" | $_sed 's/[^=]*=//')"
+  album="$(metaflac --show-tag=album "$file" | $_sed 's/[^=]*=//')"
+  year="$(metaflac --show-tag=date "$file" | $_sed 's/[^=]*=//' | $_sed -E 's/^([0-9]{4}).*$/\1/')" # ensure year is 4 digits
+  track_number="$(metaflac --show-tag=tracknumber "$file" | $_sed 's/[^=]*=//')"
+  genre="$(metaflac --show-tag=genre "$file" | $_sed 's/[^=]*=//')"
 
   # change track_number '2/11' to '2'
   track_number=$(echo "$track_number" | cut -f1 -d"/")
@@ -142,7 +149,7 @@ transcode() {
   }
 
   # Replace illegal characters with dash
-  sanitised_title="$(echo "$title" | sed 's/[?:;*\/]/-/g')"
+  sanitised_title="$(echo "$title" | $_sed 's/[?:;*\/]/-/g')"
 
   # Replace original filename with custom name
   output_file="$folder/$track_number $sanitised_title.mp3"
@@ -165,7 +172,7 @@ transcode_folder() {
 
   album=${PWD##*/}
   in_path=$(pwd)
-  out_path=$(echo "$in_path" | ssed "s/FLAC/$bitrate/i")
+  out_path=$(echo "$in_path" | $_sed "s/FLAC/$bitrate/i")
 
   # append bitrate to folder if original folder omitted "FLAC", failing substitution
   [[ "$in_path" == "$out_path" ]] && out_path="$out_path [$bitrate]"
@@ -208,7 +215,7 @@ transcode_folder() {
 
 search_album_art() {
   # Remove illegal characters, encode spaces
-  search="$(echo "$album $artist $year" | sed 's/ /+/g' | sed 's/[?:;*&\/\\]//g')"
+  search="$(echo "$album $artist $year" | $_sed 's/ /+/g' | $_sed 's/[?:;*&\/\\]//g')"
 
   echo "Search google for cover art:"
   echo "https://google.com/search?safe=off&tbs=imgo:1,isz:lt,islt:qsvga&tbm=isch&q=$search"
@@ -222,7 +229,7 @@ read_dom () {
 
 # Regex remove any char not numeric
 regex_num_only() {
-  echo "$@" | sed 's/[^0-9]*//g'
+  echo "$@" | $_sed 's/[^0-9]*//g'
 }
 
 # Execute main
