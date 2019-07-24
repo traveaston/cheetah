@@ -6,7 +6,7 @@ check_dependencies() {
   local dependency dependencies missing_dependencies
 
   # only require ssed if sed doesn't support case-insensitive matching
-  if sed 's/foo/bar/i' /dev/null >/dev/null 2>&1; then
+  if sed 's/foo/bar/i' /dev/null &>/dev/null; then
       _sed='sed'
   else
       _sed='ssed'
@@ -25,7 +25,7 @@ check_dependencies() {
   )
 
   for dependency in "${dependencies[@]}"; do
-    if ! command -v "$dependency" >/dev/null 2>&1; then
+    if ! command -v "$dependency" &>/dev/null; then
       missing_dependencies+=("$dependency")
     fi
   done
