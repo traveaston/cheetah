@@ -5,7 +5,7 @@ import unittest
 from cheetah import Album
 
 
-class TestSong(unittest.TestCase):
+class TestCheetah(unittest.TestCase):
 
 
     def test_fake_path_fails(self):
