@@ -8,8 +8,10 @@ check_dependencies() {
   # only require ssed if sed doesn't support case-insensitive matching
   if sed 's/foo/bar/i' /dev/null &>/dev/null; then
       _sed='sed'
+      _sed_extended='sed -E'
   else
       _sed='ssed'
+      _sed_extended='ssed -r'
   fi
 
   missing_dependencies=()
@@ -124,7 +126,7 @@ transcode() {
   title="$(metaflac --show-tag=title "$file" | $_sed 's/[^=]*=//')"
   artist="$(metaflac --show-tag=artist "$file" | $_sed 's/[^=]*=//')"
   album="$(metaflac --show-tag=album "$file" | $_sed 's/[^=]*=//')"
-  year="$(metaflac --show-tag=date "$file" | $_sed 's/[^=]*=//' | $_sed -E 's/^([0-9]{4}).*$/\1/')" # ensure year is 4 digits
+  year="$(metaflac --show-tag=date "$file" | $_sed 's/[^=]*=//' | $_sed_extended 's/^([0-9]{4}).*$/\1/')" # ensure year is 4 digits
   track_number="$(metaflac --show-tag=tracknumber "$file" | $_sed 's/[^=]*=//')"
   genre="$(metaflac --show-tag=genre "$file" | $_sed 's/[^=]*=//')"
 
