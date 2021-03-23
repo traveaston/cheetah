@@ -295,6 +295,8 @@ class Song:
 def main():
     logging.basicConfig(level=logging.INFO)
 
+    print(f'{NAME} version {VERSION}')
+
     args = parse_args()
 
     if args.raw_tags:
