@@ -9,7 +9,7 @@ import logging
 import mutagen
 
 NAME = 'cheetah'
-VERSION = '2.0.5'
+VERSION = '2.0.6'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -62,6 +62,10 @@ class Cheetah:
             logging.error('Can\'t transcode single song yet sorry')
             sys.exit()
 
+        if self.album.cover_files and len(self.album.cover_files) != 1:
+            logging.info('Multiple covers present, please verify correct version')
+            logging.info(self.album.cover_files)
+
 
     def transcode(self):
         print("Transcode placeholder")
@@ -103,6 +107,15 @@ class Cheetah:
             if confirm.lower() != 'y':
                 logging.error(f'Path already exists, not overwriting')
                 exit()
+
+
+    def copy_covers(self):
+        if not self.transcode_complete:
+            logging.error("Not copying covers before transcode complete")
+            exit()
+
+        for cover in self.album.cover_files:
+            copy2(cover, self.output_path)
 
 
     def get_folder_artist(self):
@@ -293,6 +306,7 @@ def main():
         print(*cheetah.album.songs, sep='\n')
     else:
         cheetah.transcode()
+        cheetah.copy_covers()
 
 
 if __name__ == '__main__':
