@@ -8,8 +8,10 @@ import sys
 import logging
 import mutagen
 
+from pydub import AudioSegment
+
 NAME = 'cheetah'
-VERSION = '2.0.6'
+VERSION = '2.0.7'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -38,10 +40,19 @@ def parse_args():
 
 
 class Cheetah:
-    def __init__(self, args):
+    """
+    Cheetah terminology
+    source: input folder/directory to transcode from
+    output: destination folder/directory to output transcoded files to
+    song: object/file that is the song. a song has a title
+    cover: album art file
+    """
+
+    def __init__(self, args, transcoder):
         super(Cheetah, self).__init__()
 
         self.args = args
+        self.transcoder = transcoder
 
         self.source, self.output_path = self.build_paths(self.args)
 
@@ -152,6 +163,23 @@ class Cheetah:
         self.transcode_complete = True
 
 
+    def transcode_song(self, song):
+        output_path = self.output_path
+        covers = self.album.cover_files
+
+        output_file = f'{output_path}/{song.output_name}'
+
+        logging.debug(f'Transcoding {song.source} to {output_file}')
+        logging.info(f'Transcoding {song.output_name}')
+
+        audio = self.transcoder.from_file(song.source, "flac")
+
+        if len(self.album.cover_files) > 0:
+            audio.export(output_file, format='mp3', parameters=["-q:a", "0"], id3v2_version='3', tags=song.tags, cover=self.album.cover_files[0])
+        else:
+            audio.export(output_file, format='mp3', parameters=["-q:a", "0"], id3v2_version='3', tags=song.tags)
+
+
 class Album:
     def __init__(self, cheetah):
         super(Album, self).__init__()
@@ -207,6 +235,13 @@ class Song:
             print(self.raw_tags)
 
         self.get_and_format_tags()
+
+        # TODO: mp3 is hardcoded but eventually allow this to be set
+        # set output filename to ~"01 Title.ext"
+        self.output_name = f"{self.tags['tracknumber']:02d} {self.tags['title']}.mp3"
+
+        # replace illegal characters with dash
+        self.output_name = regex.sub(r'[\/\\:*?"<>|]', '-', self.output_name)
 
 
     def __str__(self):
@@ -311,7 +346,7 @@ def main():
     if args.raw_tags:
         args.dry_run = True
 
-    cheetah = Cheetah(args)
+    cheetah = Cheetah(args, AudioSegment)
 
     if cheetah.album.totaltracks == 0:
         logging.error('No tracks to transcode')
