@@ -5,9 +5,10 @@ import argparse
 import os
 import re as regex
 import sys
+import mutagen
 
 NAME = 'cheetah'
-VERSION = '2.0.2'
+VERSION = '2.0.3'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -27,6 +28,10 @@ def parse_args():
                         help='Specify full output path with new folder title')
     parser.add_argument('-O', '--relocate_path', default='',
                         help='Relocate album to path but keep default name')
+    parser.add_argument('-n', '--dry-run', default=False, action='store_true',
+                        help='Show what would happen and exit')
+    parser.add_argument('-r', '--raw-tags', default=False, action='store_true',
+                        help='Show raw tags and exit')
 
     return parser.parse_args()
 
@@ -39,6 +44,8 @@ class Cheetah:
 
         self.source, self.output_path = self.build_paths(self.args)
 
+        self.transcode_complete = False
+
         self.source_type = self.get_source_type()
 
         if self.source_type == 'folder':
@@ -46,6 +53,12 @@ class Cheetah:
         else:
             logging.error('Can\'t transcode single song yet sorry')
             sys.exit()
+
+
+    def transcode(self):
+        print("Transcode placeholder")
+
+        self.transcode_complete = True
 
 
     def build_paths(self, args):
@@ -118,10 +131,38 @@ class Album:
         return songs
 
 
+class Song:
+    def __init__(self, source, album):
+        super(Song, self).__init__()
+
+        self.album = album
+
+        self.source = source
+
+        self.tags = {}
+
+        self.raw_tags = mutagen.File(self.source)
+
+        if album.cheetah.args.raw_tags:
+            print(self.raw_tags)
+
+
+    def __str__(self):
+        return str(self.tags)
+
+
 def main():
     args = parse_args()
 
+    if args.raw_tags:
+        args.dry_run = True
+
     cheetah = Cheetah(args)
+
+    if args.dry_run:
+        print(*cheetah.album.songs, sep='\n')
+    else:
+        cheetah.transcode()
 
 
 if __name__ == '__main__':
