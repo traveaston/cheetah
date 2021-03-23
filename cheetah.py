@@ -304,6 +304,10 @@ def main():
 
     cheetah = Cheetah(args)
 
+    if cheetah.album.totaltracks == 0:
+        logging.error('No tracks to transcode')
+        exit()
+
     if args.dry_run:
         print(*cheetah.album.songs, sep='\n')
     else:
