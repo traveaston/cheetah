@@ -11,7 +11,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.0.8'
+VERSION = '2.0.9'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -262,11 +262,11 @@ class Song:
         self.set_tag('title')
         self.set_tag('genre', self.format_genre)
 
-        self.set_tag(['totaltracks', 'tracktotal'], int)
-        self.set_tag('tracknumber')
+        self.set_totals_tags()
 
-        self.set_tag(['totaldiscs', 'disctotal'], int)
-        self.set_tag('discnumber')
+        # set tags for iTunes to recognise
+        self.tags['track'] = f"{self.tags['tracknumber']}/{self.tags['totaltracks']}"
+        self.tags['date'] = self.tags['year']
 
 
     def get_unused_tags(self):
@@ -352,6 +352,50 @@ class Song:
             self.tags[tag] = value
 
         return self.tags[tag]
+
+
+    def set_totals_tags(self):
+        # set total discs/tracks first as disc/tracknumber may be 1/2 and we
+        # can overwrite the empty total variable in the split method
+        self.set_tag(['totaldiscs', 'disctotal'], int)
+        self.set_tag(['totaltracks', 'tracktotal'], int)
+        self.set_tag('discnumber', self.split_discnumber)
+        self.set_tag('tracknumber', self.split_tracknumber)
+
+        # if totaldiscs is 1 (or blank), remove discnumber/totaldiscs tags
+        # also override totaltracks with filecount if it's blank, or warn if
+        # they don't match
+        if self.tags['totaldiscs'] in (1, ''):
+            self.tags.pop('discnumber')
+            self.tags.pop('totaldiscs')
+
+            if self.tags['totaltracks'] != self.album.totaltracks:
+                if not self.tags['totaltracks']:
+                    self.tags['totaltracks'] = self.album.totaltracks
+                    logging.debug(f'totaltracks tag is blank, overwriting with filecount: {self.album.totaltracks}')
+                else:
+                    logging.warning(f"totaldiscs is 1, but totaltracks tag does not equal file count ({self.tags['totaltracks']} vs {self.album.totaltracks})")
+
+
+    def split_discnumber(self, number):
+        try:
+            return int(number)
+        except ValueError:
+            if not self.tags['totaldiscs']:
+                discnumber, self.tags['totaldiscs'] = list(map(int, number.split('/')))
+
+        return discnumber
+
+
+    # TODO: combine this and above method
+    def split_tracknumber(self, number):
+        try:
+            return int(number)
+        except ValueError:
+            if not self.tags['totaltracks']:
+                tracknumber, self.tags['totaltracks'] = list(map(int, number.split('/')))
+
+        return tracknumber
 
 
 def main():
