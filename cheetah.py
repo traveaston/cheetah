@@ -31,6 +31,23 @@ def parse_args():
     return parser.parse_args()
 
 
+class Cheetah:
+    def __init__(self, args):
+        super(Cheetah, self).__init__()
+
+        self.args = args
+
+        self.source, self.output_path = self.build_paths(self.args)
+
+        self.source_type = self.get_source_type()
+
+        if self.source_type == 'folder':
+            self.album = Album(self)
+        else:
+            logging.error('Can\'t transcode single song yet sorry')
+            sys.exit()
+
+
     def build_paths(self, args):
         """Get/generate source and output paths"""
 
@@ -53,22 +70,29 @@ def parse_args():
 
         return source, output_path
 
-class Album():
+
+    def get_source_type(self):
+        if os.path.isfile(self.source):
+            return 'file'
+
+        if os.path.isdir(self.source):
+            return 'folder'
+
+        # Symlinks?
+        raise Exception(f'"{self.source}" is not a file or folder')
 
 
-    def __init__(self, source):
+class Album:
+    def __init__(self, cheetah):
         super(Album, self).__init__()
-        self.source = source
 
-        self.ensure_exists()
+        self.cheetah = cheetah
+        self.source = self.cheetah.source
 
         self.song_files, self.cover_files = self.detect_songs_and_covers()
-        self.total_tracks = len(self.song_files)
+        self.totaltracks = len(self.song_files)
 
-
-    def ensure_exists(self):
-        if not os.path.exists(self.source):
-            raise Exception('Path does not exist: {}'.format(self.source))
+        self.songs = self.instantiate_songs(self.song_files)
 
 
     def detect_songs_and_covers(self):
@@ -82,21 +106,22 @@ class Album():
                 if file.endswith(".jpg"):
                     covers.append(os.path.join(root, file))
 
-        if not covers:
-            covers.append('fake_cover.jpg')
-
         return sorted(song_files), covers
+
+
+    def instantiate_songs(self, song_files):
+        songs = []
+
+        for file in song_files:
+            songs.append(Song(file, self))
+
+        return songs
 
 
 def main():
     args = parse_args()
 
-    source, output_path = build_paths(args)
-
-    try:
-        album = Album(source)
-    except Exception as e:
-        sys.exit(e)
+    cheetah = Cheetah(args)
 
 
 if __name__ == '__main__':
