@@ -1,4 +1,4 @@
-#!./venv/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import argparse
@@ -7,7 +7,7 @@ import re
 import sys
 
 NAME = 'cheetah'
-VERSION = '2.0.0'
+VERSION = '2.0.1'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
