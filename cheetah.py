@@ -9,7 +9,7 @@ import logging
 import mutagen
 
 NAME = 'cheetah'
-VERSION = '2.0.4'
+VERSION = '2.0.5'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -47,6 +47,8 @@ class Cheetah:
 
         self.transcode_complete = False
 
+        self.check_source_and_output_path()
+
         self.source_type = self.get_source_type()
 
         if self.source_type == 'folder':
@@ -83,6 +85,19 @@ class Cheetah:
             output_path = f'{os.getcwd()}/{new_folder_title}'
 
         return source, output_path
+
+
+    def check_source_and_output_path(self):
+        if not os.path.exists(self.source):
+            logging.error(f'Path does not exist: "{self.source}"')
+            exit()
+
+        if os.path.exists(self.output_path) and os.listdir(self.output_path):
+            confirm = input(f'Overwrite existing path: "{self.output_path}" [Y/n] ? ') or 'y'
+
+            if confirm.lower() != 'y':
+                logging.error(f'Path already exists, not overwriting')
+                exit()
 
 
     def get_source_type(self):
