@@ -3,11 +3,11 @@
 
 import argparse
 import os
-import re
+import re as regex
 import sys
 
 NAME = 'cheetah'
-VERSION = '2.0.1'
+VERSION = '2.0.2'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -39,7 +39,7 @@ def build_paths(args):
     source = args.source.rstrip('/\\')
 
     # Substitute original format for new format in album directory name
-    new_folder_title = re.sub('FLAC', args.bitrate, source)
+    new_folder_title = regex.sub(r'FLAC', args.bitrate, source)
 
     # Prefer full output path, then relocation path, then default to CWD
     if args.output_path:
@@ -49,7 +49,7 @@ def build_paths(args):
             args.relocate_path.rstrip('/\\'),
             new_folder_title)
     else:
-        output_path = '{}/{}'.format(os.getcwd(), new_folder_title)
+        output_path = f'{os.getcwd()}/{new_folder_title}'
 
     return source, output_path
 
