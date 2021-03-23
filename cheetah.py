@@ -11,7 +11,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.0.7'
+VERSION = '2.0.8'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -243,6 +243,8 @@ class Song:
         # replace illegal characters with dash
         self.output_name = regex.sub(r'[\/\\:*?"<>|]', '-', self.output_name)
 
+        logging.debug(self.get_unused_tags())
+
 
     def __str__(self):
         return str(self.tags)
@@ -265,6 +267,22 @@ class Song:
 
         self.set_tag(['totaldiscs', 'disctotal'], int)
         self.set_tag('discnumber')
+
+
+    def get_unused_tags(self):
+        keys = self.raw_tags.keys()
+        unused_tags = 'Unused tags: '
+
+        # remove all used tags from temp tags list
+        for tag in self.tags_used:
+            if tag in keys:
+                keys.remove(tag)
+
+        # for all remaining tags, add key/value to output
+        for tag in keys:
+            unused_tags += f"{tag}: {self.raw_tags[tag]}; "
+
+        return unused_tags
 
 
     def format_genre(self, genre):
