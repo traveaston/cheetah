@@ -5,10 +5,11 @@ import argparse
 import os
 import re as regex
 import sys
+import logging
 import mutagen
 
 NAME = 'cheetah'
-VERSION = '2.0.3'
+VERSION = '2.0.4'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -140,18 +141,111 @@ class Song:
         self.source = source
 
         self.tags = {}
+        self.tags_used = []
 
         self.raw_tags = mutagen.File(self.source)
 
         if album.cheetah.args.raw_tags:
             print(self.raw_tags)
 
+        self.get_and_format_tags()
+
 
     def __str__(self):
         return str(self.tags)
 
 
+    def get_and_format_tags(self):
+        self.set_tag('album')
+        self.set_tag('artist')
+
+        # let album artist fall back to artist
+        self.set_tag(['album_artist', 'albumartist', 'artist'])
+
+        self.set_tag(['year', 'date'], self.format_year)
+
+        self.set_tag('title')
+        self.set_tag('genre', self.format_genre)
+
+        self.set_tag(['totaltracks', 'tracktotal'], int)
+        self.set_tag('tracknumber')
+
+        self.set_tag(['totaldiscs', 'disctotal'], int)
+        self.set_tag('discnumber')
+
+
+    def format_genre(self, genre):
+        if genre == 'Rap/Hip Hop':
+            return 'Hip-Hop'
+        elif genre == 'R & B':
+            return 'R&B'
+
+        return genre
+
+
+    def format_year(self, year):
+        if len(year) != 4:
+            match = regex.match(r'^\d{4}', year)
+            if match:
+                year = match[0]
+            else:
+                logging.error(f'{year} does not follow format YYYY-MM-DD')
+
+        return year
+
+
+    def set_tag(self, fields, callback = None):
+        """
+        fields can be a list where the first item will be used as the key, or
+        just a string
+        set_tag('artist') # set self.tags['artist'] to artist tag from metadata
+        set_tag(['artist', 'album_artist']) # set self.tags['artist'] to
+        artist tag (or album_artist if empty) from metadata
+        also allow a method name to be passed as a second argument to format
+        or otherwise filter metadata before saving to tags
+        """
+
+        # convert fields variable to a list if necessary
+        if isinstance(fields, str):
+            fields = [fields]
+
+        tag = fields[0]
+
+        # set tag first in case metadata is empty
+        self.tags[tag] = ''
+        value = ''
+
+        # try all fields in order and return the first value found
+        for key in fields:
+            try:
+                value = self.raw_tags[key]
+            except KeyError:
+                pass
+            else:
+                # convert lists into strings
+                # TODO: this could be simplified to just the join() line
+                if isinstance(value, list) and len(value) == 1:
+                    value = value[0]
+                else:
+                    value = ', '.join(value)
+
+                self.tags_used.append(key)
+                break
+
+        if callback and value:
+            try:
+                self.tags[tag] = callback(value)
+            except:
+                logging.error(f'Failed to set tag (using {callback}): "{tag}": "{value}"')
+        else:
+            self.tags[tag] = value
+
+        return self.tags[tag]
+
+
 def main():
+    logging.basicConfig(level=logging.INFO)
+
     args = parse_args()
 
     if args.raw_tags:
