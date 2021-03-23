@@ -67,12 +67,6 @@ class Cheetah:
             logging.info(self.album.cover_files)
 
 
-    def transcode(self):
-        print("Transcode placeholder")
-
-        self.transcode_complete = True
-
-
     def build_paths(self, args):
         """Get/generate source and output paths"""
 
@@ -141,6 +135,21 @@ class Cheetah:
 
         # Symlinks?
         raise Exception(f'"{self.source}" is not a file or folder')
+
+
+    def transcode(self):
+        logging.info(f'Transcoding {self.album.totaltracks} tracks into {self.output_path}')
+
+        # ensure output folder exists
+        try:
+            os.mkdir(self.output_path)
+        except FileExistsError:
+            pass
+
+        for song in self.album.songs:
+            self.transcode_song(song)
+
+        self.transcode_complete = True
 
 
 class Album:
