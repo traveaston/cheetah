@@ -31,28 +31,27 @@ def parse_args():
     return parser.parse_args()
 
 
-def build_paths(args):
-    """Get/generate source and output paths"""
+    def build_paths(self, args):
+        """Get/generate source and output paths"""
 
-    # Strip both forward and backslashes because copying the path from
-    # Windows explorer or similar isn't unreasonable user behaviour
-    source = args.source.rstrip('/\\')
+        # Strip both forward and backslashes because copying the path from
+        # Windows explorer or similar isn't unreasonable user behaviour
+        source = args.source.rstrip('/\\')
 
-    # Substitute original format for new format in album directory name
-    new_folder_title = regex.sub(r'FLAC', args.bitrate, source)
+        # Substitute original format for new format in album directory name
+        new_folder_title = regex.sub(r'FLAC', args.bitrate, source)
 
-    # Prefer full output path, then relocation path, then default to CWD
-    if args.output_path:
-        output_path = args.output_path
-    elif args.relocate_path:
-        output_path = '{}/{}'.format(
-            args.relocate_path.rstrip('/\\'),
-            new_folder_title)
-    else:
-        output_path = f'{os.getcwd()}/{new_folder_title}'
+        # Prefer full output path, then relocation path, then default to CWD
+        if args.output_path:
+            output_path = args.output_path
+        elif args.relocate_path:
+            output_path = '{}/{}'.format(
+                args.relocate_path.rstrip('/\\'),
+                new_folder_title)
+        else:
+            output_path = f'{os.getcwd()}/{new_folder_title}'
 
-    return source, output_path
-
+        return source, output_path
 
 class Album():
 
