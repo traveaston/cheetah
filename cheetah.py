@@ -47,6 +47,11 @@ class Cheetah:
 
         self.transcode_complete = False
 
+        self.folder_artist = self.get_folder_artist()
+
+        if self.args.dry_run:
+            logging.info(f'folder_artist: {self.folder_artist}')
+
         self.check_source_and_output_path()
 
         self.source_type = self.get_source_type()
@@ -100,6 +105,20 @@ class Cheetah:
                 exit()
 
 
+    def get_folder_artist(self):
+        artist_regex = regex.compile(r'(^.+?) ?-')
+        source_split = self.source.split('/')
+
+        while source_split:
+            match = artist_regex.match(source_split[-1])
+            if match:
+                logging.debug(f'Detected "{match.group(1)}" as artist from "{source_split[-1]}"')
+                return match.group(1)
+            source_split.pop(-1)
+
+        logging.warning(f'Couldn\'t get artist from path: "{self.source}"')
+
+
     def get_source_type(self):
         if os.path.isfile(self.source):
             return 'file'
@@ -117,6 +136,8 @@ class Album:
 
         self.cheetah = cheetah
         self.source = self.cheetah.source
+
+        self.folder_artist = self.cheetah.folder_artist
 
         self.song_files, self.cover_files = self.detect_songs_and_covers()
         self.totaltracks = len(self.song_files)
