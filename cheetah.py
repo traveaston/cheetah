@@ -11,7 +11,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.1.0'
+VERSION = '2.1.1'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -94,7 +94,7 @@ class Cheetah:
         # Substitute original format for new format in album directory name
         new_folder_title = regex.sub(r'FLAC', args.bitrate, source)
 
-        # Prefer full output path, then relocation path, then default to CWD
+        # Prefer full output path, then relocation path, then default to relative path
         if args.output_path:
             output_path = args.output_path
         elif args.relocate_path:
@@ -102,7 +102,7 @@ class Cheetah:
                 args.relocate_path.rstrip('/\\'),
                 new_folder_title)
         else:
-            output_path = f'{os.getcwd()}/{new_folder_title}'
+            output_path = new_folder_title
 
         return source, output_path
 
