@@ -11,7 +11,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.0.9'
+VERSION = '2.1.0'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -27,6 +27,8 @@ def parse_args():
                         help='Source to transcode from')
     parser.add_argument('-b', '--bitrate', default='V0',
                         help='Bitrate to transcode to (default: V0)')
+    parser.add_argument('-d', '--debug', default=False, action='store_true',
+                        help='Set logging level to debug')
     parser.add_argument('-o', '--output_path', default='',
                         help='Specify full output path with new folder title')
     parser.add_argument('-O', '--relocate_path', default='',
@@ -53,6 +55,10 @@ class Cheetah:
 
         self.args = args
         self.transcoder = transcoder
+
+        self.bracket_regex = regex.compile(r'(\()(feat\..*?)(\))')
+        self.feat_regex = regex.compile(r' (\()*[fF](ea)*t(uring)*\.* ')
+        self.separator_regex = regex.compile(r'( & |[/,;] *)')
 
         self.source, self.output_path = self.build_paths(self.args)
 
@@ -185,9 +191,8 @@ class Album:
         super(Album, self).__init__()
 
         self.cheetah = cheetah
-        self.source = self.cheetah.source
-
-        self.folder_artist = self.cheetah.folder_artist
+        self.source = cheetah.source
+        self.folder_artist = cheetah.folder_artist
 
         self.song_files, self.cover_files = self.detect_songs_and_covers()
         self.totaltracks = len(self.song_files)
@@ -223,7 +228,7 @@ class Song:
         super(Song, self).__init__()
 
         self.album = album
-
+        self.cheetah = album.cheetah
         self.source = source
 
         self.tags = {}
@@ -231,10 +236,12 @@ class Song:
 
         self.raw_tags = mutagen.File(self.source)
 
-        if album.cheetah.args.raw_tags:
+        if self.cheetah.args.raw_tags:
             print(self.raw_tags)
 
         self.get_and_format_tags()
+
+        self.parse_features()
 
         # TODO: mp3 is hardcoded but eventually allow this to be set
         # set output filename to ~"01 Title.ext"
@@ -303,6 +310,40 @@ class Song:
                 logging.error(f'{year} does not follow format YYYY-MM-DD')
 
         return year
+
+
+    def parse_features(self):
+        # pull features out of title/artist tag
+        title_only, title_features = self.split_tag_on_feat(self.tags['title'])
+        artists, artist_features = self.split_tag_on_feat(self.tags['artist'])
+
+        # re-combine artists pulled from artist tag after "feat.", if present
+        if artist_features:
+            artists = [artists] + artist_features
+            artists = ';'.join(artists)
+
+        # reformat separators then split artists into list (not required for
+        # title as it's unlikely to contain "01 Title;Artist2;Artist3")
+        artists = self.cheetah.separator_regex.sub(';', artists)
+        artists = artists.split(';')
+
+        # combine artists tag and features from title, and uniquify
+        all_artists = self.uniquify(artists + title_features)
+
+        main_artist, features = self.split_main_artist(all_artists)
+
+        if features:
+            title = f'{title_only} (feat. {", ".join(features)})'
+        else:
+            title = title_only
+
+        self.tags['artist'] = main_artist
+        self.tags['title'] = title
+
+        if self.tags['album_artist'] != self.tags['artist']:
+            self.tags['album_artist'] = self.tags['artist']
+
+        logging.debug(f"Using {self.tags['album_artist']} as album_artist")
 
 
     def set_tag(self, fields, callback = None):
@@ -377,6 +418,60 @@ class Song:
                     logging.warning(f"totaldiscs is 1, but totaltracks tag does not equal file count ({self.tags['totaltracks']} vs {self.album.totaltracks})")
 
 
+    def split_main_artist(self, all_artists):
+        """
+        Loops artists through a combination of separators and compares each
+        to the artist extracted from the folder name.
+        Returns a tuple of the main artist as the first item, and
+        a list of the features as the second item (or an empty list)
+        """
+
+        if not isinstance(all_artists, list):
+            logging.error(f'split_main_artist: expected list but received {type(all_artists)}')
+            return
+        else:
+            main_artist, features = all_artists.pop(0), all_artists
+
+        return main_artist, features
+
+
+    def split_tag_on_feat(self, tag):
+        """
+        Returns a tuple of the main artist or song title as the first item, and
+        a list of the features as the second item (or an empty list)
+        """
+
+        # reformat all permutations to "feat." in tag
+        old = tag
+        tag = self.cheetah.feat_regex.sub(r' \1feat. ', tag)
+        if old != tag:
+            logging.debug(f'reformatted feat.: {old} -> {tag}')
+
+        # TODO: handle certain words in title like (Instrumental), (Remix),
+        # etc as they get pulled in to the features list
+
+        # remove brackets around features if present
+        old = tag
+        tag = self.cheetah.bracket_regex.sub(r'\2', tag)
+        if old != tag:
+            logging.debug(f'remove brackets: {old} -> {tag}')
+
+        try:
+            tag_only, features = tag.split(' feat. ')
+        except ValueError:
+            # tag does not contain "feat."
+            return tag, []
+        else:
+            # replace all separators with semicolon
+            old = features
+            features = self.cheetah.separator_regex.sub(';', features)
+            features = regex.sub(' and ', ';', features)
+            if old != features:
+                logging.debug(f'reformatted with semicolons: {old} -> {features}')
+
+        return tag_only, features.split(';')
+
+
     def split_discnumber(self, number):
         try:
             return int(number)
@@ -398,6 +493,13 @@ class Song:
         return tracknumber
 
 
+    def uniquify(self, list):
+        processed = set()
+
+        # https://stackoverflow.com/a/23473270
+        return [x for x in list if x.lower() not in processed and not processed.add(x.lower())]
+
+
 def main():
     logging.basicConfig(level=logging.INFO)
 
@@ -407,6 +509,9 @@ def main():
 
     if args.raw_tags:
         args.dry_run = True
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     cheetah = Cheetah(args, AudioSegment)
 
