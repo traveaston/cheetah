@@ -110,24 +110,35 @@ class Cheetah:
     def check_source_and_output_path(self):
         if not os.path.exists(self.source):
             logging.error(f'Path does not exist: "{self.source}"')
-            exit()
+            sys.exit()
 
         if os.path.exists(self.output_path) and os.listdir(self.output_path):
+            if self.args.raw_tags:
+                return
+
             confirm = input(f'Overwrite existing path: "{self.output_path}" [Y/n] ? ') or 'y'
 
             if confirm.lower() != 'y':
                 logging.error(f'Path already exists, not overwriting')
-                exit()
+                sys.exit()
 
 
     def copy_covers(self):
         if not self.transcode_complete:
             logging.error("Not copying covers before transcode complete")
-            exit()
+            sys.exit()
+
+        if self.args.dry_run:
+            return
 
         for cover in self.album.cover_files:
             copy2(cover, self.output_path)
 
+    def ensure_folder_exists(self, folder):
+        try:
+            os.mkdir(folder)
+        except FileExistsError:
+            pass
 
     def get_folder_artist(self):
         artist_regex = regex.compile(r'(^.+?) ?-')
@@ -157,11 +168,8 @@ class Cheetah:
     def transcode(self):
         logging.info(f'Transcoding {self.album.totaltracks} tracks into {self.output_path}')
 
-        # ensure output folder exists
-        try:
-            os.mkdir(self.output_path)
-        except FileExistsError:
-            pass
+        if not self.args.dry_run:
+            self.ensure_folder_exists(self.output_path)
 
         for song in self.album.songs:
             self.transcode_song(song)
@@ -177,6 +185,9 @@ class Cheetah:
 
         logging.debug(f'Transcoding {song.source} to {output_file}')
         logging.info(f'Transcoding {song.output_name}')
+
+        if self.args.dry_run:
+            return
 
         audio = self.transcoder.from_file(song.source, "flac")
 
@@ -517,9 +528,9 @@ def main():
 
     if cheetah.album.totaltracks == 0:
         logging.error('No tracks to transcode')
-        exit()
+        sys.exit()
 
-    if args.dry_run:
+    if args.raw_tags:
         print(*cheetah.album.songs, sep='\n')
     else:
         cheetah.transcode()
