@@ -11,7 +11,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.1.2'
+VERSION = '2.1.3'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -306,6 +306,29 @@ class Song:
         return unused_tags
 
 
+    def join_list(self, separator, items):
+        """
+        take a separator type, and a list of items, and
+        return a joined string
+        SMART will take [1, 2, 3] and return '1, 2 & 3'
+        others are self explanatory and used in the recursive portion
+        """
+
+        items = items.copy() # ensure immutable
+
+        if separator == 'COMMA':
+            return ', '.join(items)
+        elif separator == 'SMART':
+            if len(items) > 1:
+                # join last 2 items with ampersand rather than comma
+                last_item = items.pop(-1)
+                items[-1] += f' & {last_item}'
+
+            return ', '.join(items)
+        elif separator == 'SLASH':
+            return '/'.join(items)
+
+
     def format_genre(self, genre):
         if genre == 'Rap/Hip Hop':
             return 'Hip-Hop'
@@ -347,7 +370,7 @@ class Song:
         main_artist, features = self.split_main_artist(all_artists)
 
         if features:
-            title = f'{title_only} (feat. {", ".join(features)})'
+            title = f'{title_only} (feat. {self.join_list("SMART", features)})'
         else:
             title = title_only
 
