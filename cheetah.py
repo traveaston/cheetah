@@ -11,7 +11,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.1.1'
+VERSION = '2.1.2'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -183,8 +183,11 @@ class Cheetah:
 
         output_file = f'{output_path}/{song.output_name}'
 
-        logging.debug(f'Transcoding {song.source} to {output_file}')
-        logging.info(f'Transcoding {song.output_name}')
+        loglevel = logging.getLogger().getEffectiveLevel()
+        if loglevel == logging.DEBUG:
+            logging.debug(f'Transcoding input/output:\n"{song.source}" \n"{output_file}"')
+        elif loglevel == logging.INFO:
+            logging.info(f'Transcoding "{song.output_name}"')
 
         if self.args.dry_run:
             return
@@ -512,8 +515,6 @@ class Song:
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
-
     print(f'{NAME} version {VERSION}')
 
     args = parse_args()
@@ -523,6 +524,8 @@ def main():
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     cheetah = Cheetah(args, AudioSegment)
 
