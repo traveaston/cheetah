@@ -4,6 +4,7 @@
 import argparse
 import os
 import re as regex
+import shutil
 import sys
 import logging
 import mutagen
@@ -11,7 +12,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.1.3'
+VERSION = '2.1.4'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -29,12 +30,12 @@ def parse_args():
                         help='Bitrate to transcode to (default: V0)')
     parser.add_argument('-d', '--debug', default=False, action='store_true',
                         help='Set logging level to debug')
+    parser.add_argument('-n', '--dry-run', default=False, action='store_true',
+                        help='Show what would happen and exit')
     parser.add_argument('-o', '--output_path', default='',
                         help='Specify full output path with new folder title')
     parser.add_argument('-O', '--relocate_path', default='',
                         help='Relocate album to path but keep default name')
-    parser.add_argument('-n', '--dry-run', default=False, action='store_true',
-                        help='Show what would happen and exit')
     parser.add_argument('-r', '--raw-tags', default=False, action='store_true',
                         help='Show raw tags and exit')
 
@@ -132,7 +133,10 @@ class Cheetah:
             return
 
         for cover in self.album.cover_files:
-            copy2(cover, self.output_path)
+            try:
+                shutil.copy2(cover, self.output_path)
+            except shutil.SameFileError:
+                pass
 
     def ensure_folder_exists(self, folder):
         try:
@@ -218,7 +222,7 @@ class Album:
         song_files = []
         covers = []
 
-        for root, dummy, files in os.walk(self.source):
+        for root, _, files in os.walk(self.source):
             for file in files:
                 if file.endswith(".flac"):
                     song_files.append(os.path.join(root, file))
