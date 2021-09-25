@@ -12,7 +12,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.1.4'
+VERSION = '2.1.5'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -36,6 +36,8 @@ def parse_args():
                         help='Specify full output path with new folder title')
     parser.add_argument('-O', '--relocate_path', default='',
                         help='Relocate album to path but keep default name')
+    parser.add_argument('-q', '--quiet', default=False, action='store_true',
+                        help='Show only errors and critical messages')
     parser.add_argument('-r', '--raw-tags', default=False, action='store_true',
                         help='Show raw tags and exit')
 
@@ -551,6 +553,8 @@ def main():
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+    elif args.quiet:
+        logging.basicConfig(level=logging.ERROR)
     else:
         logging.basicConfig(level=logging.INFO)
 
