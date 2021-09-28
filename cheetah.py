@@ -12,7 +12,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.1.6'
+VERSION = '2.1.7'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -97,7 +97,7 @@ class Cheetah:
         source = args.source.rstrip('/\\')
 
         # Substitute original format for new format in album directory name
-        new_folder_title = regex.sub(r'FLAC', args.bitrate, source)
+        new_folder_title = regex.sub(r'(AIFF|ALAC|FLAC)', args.bitrate, source)
 
         # Prefer full output path, then relocation path, then default to relative path
         if args.output_path:
@@ -214,7 +214,7 @@ class Cheetah:
         if self.args.dry_run:
             return
 
-        audio = self.transcoder.from_file(song.source, "flac")
+        audio = self.transcoder.from_file(song.source, song.filetype)
 
         if len(self.album.cover_files) > 0:
             audio.export(output_file, format='mp3', parameters=['-q:a', '0'], id3v2_version='3', tags=song.tags, cover=self.album.cover_files[0])
@@ -242,7 +242,7 @@ class Album:
 
         for root, _, files in os.walk(self.source):
             for file in files:
-                if file.endswith(".flac"):
+                if file.endswith(('.aiff', '.alac', '.flac')):
                     song_files.append(os.path.join(root, file))
                 if file.endswith(".jpg"):
                     covers.append(os.path.join(root, file))
@@ -272,6 +272,7 @@ class Song:
         self.tags_used = []
 
         self.raw_tags = mutagen.File(self.source)
+        self.filetype = self.raw_tags.__class__.__name__.lower()
 
         if self.cheetah.args.raw_tags:
             print(self.raw_tags)
