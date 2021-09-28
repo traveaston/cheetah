@@ -12,7 +12,7 @@ import mutagen
 from pydub import AudioSegment
 
 NAME = 'cheetah'
-VERSION = '2.1.5'
+VERSION = '2.1.6'
 DESCRIPTION = 'Audio transcoding tool'
 AUTHOR = 'Trav Easton'
 AUTHOR_EMAIL = 'travzdevil69@hotmail.com'
@@ -59,18 +59,20 @@ class Cheetah:
         self.args = args
         self.transcoder = transcoder
 
+        self.artist_album_regex = regex.compile(r'(^.+?) - (.+) \(')
         self.bracket_regex = regex.compile(r'(\()(feat\..*?)(\))')
         self.feat_regex = regex.compile(r' (\()*[fF](ea)*t(uring)*\.* ')
         self.separator_regex = regex.compile(r'( & |[/,;] *)')
+        self.year_regex = regex.compile(r'.*([12]\d{3}).*')
 
         self.source, self.output_path = self.build_paths(self.args)
 
         self.transcode_complete = False
 
-        self.folder_artist = self.get_folder_artist()
+        self.path_metadata = self.parse_path_metadata()
 
         if self.args.dry_run:
-            logging.info(f'folder_artist: {self.folder_artist}')
+            logging.info(f'path metadata: {self.path_metadata}')
 
         self.check_source_and_output_path()
 
@@ -146,19 +148,6 @@ class Cheetah:
         except FileExistsError:
             pass
 
-    def get_folder_artist(self):
-        artist_regex = regex.compile(r'(^.+?) ?-')
-        source_split = self.source.split('/')
-
-        while source_split:
-            match = artist_regex.match(source_split[-1])
-            if match:
-                logging.debug(f'Detected "{match.group(1)}" as artist from "{source_split[-1]}"')
-                return match.group(1)
-            source_split.pop(-1)
-
-        logging.warning(f'Couldn\'t get artist from path: "{self.source}"')
-
 
     def get_source_type(self):
         if os.path.isfile(self.source):
@@ -169,6 +158,33 @@ class Cheetah:
 
         # Symlinks?
         raise Exception(f'"{self.source}" is not a file or folder')
+
+
+    def parse_path_metadata(self):
+        """
+        We expect 'Artist - Album (YEAR)' in the path
+        Search deepest first, and return an object
+        """
+
+        path_chunks = self.source.split('/')
+        metadata = {}
+
+        while path_chunks:
+            match = self.artist_album_regex.match(path_chunks[-1])
+
+            if match:
+                metadata['artist'] = match.group(1)
+                metadata['album'] = match.group(2)
+                metadata['year'] = self.year_regex.match(path_chunks[-1]).group(1)
+
+                logging.debug(f'Detected metadata: {metadata} from "{path_chunks[-1]}"')
+
+                return metadata
+
+            path_chunks.pop(-1)
+
+        logging.warning(f'Couldn\'t get artist/album from path: "{self.source}"')
+        return {}
 
 
     def transcode(self):
@@ -212,7 +228,7 @@ class Album:
 
         self.cheetah = cheetah
         self.source = cheetah.source
-        self.folder_artist = cheetah.folder_artist
+        self.path_metadata = cheetah.path_metadata
 
         self.song_files, self.cover_files = self.detect_songs_and_covers()
         self.totaltracks = len(self.song_files)
@@ -250,6 +266,7 @@ class Song:
         self.album = album
         self.cheetah = album.cheetah
         self.source = source
+        self.path_metadata = album.path_metadata
 
         self.tags = {}
         self.tags_used = []
@@ -346,7 +363,7 @@ class Song:
 
     def format_year(self, year):
         if len(year) != 4:
-            match = regex.match(r'^\d{4}', year)
+            match = self.year_regex.match(year)
             if match:
                 year = match[0]
             else:
@@ -464,7 +481,7 @@ class Song:
     def split_main_artist(self, all_artists):
         """
         Loops artists through a combination of separators and compares each
-        to the artist extracted from the folder name.
+        to the artist extracted from path metadata.
         Returns a tuple of the main artist as the first item, and
         a list of the features as the second item (or an empty list)
         """
