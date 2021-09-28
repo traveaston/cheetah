@@ -217,9 +217,9 @@ class Cheetah:
         audio = self.transcoder.from_file(song.source, "flac")
 
         if len(self.album.cover_files) > 0:
-            audio.export(output_file, format='mp3', parameters=["-q:a", "0"], id3v2_version='3', tags=song.tags, cover=self.album.cover_files[0])
+            audio.export(output_file, format='mp3', parameters=['-q:a', '0'], id3v2_version='3', tags=song.tags, cover=self.album.cover_files[0])
         else:
-            audio.export(output_file, format='mp3', parameters=["-q:a", "0"], id3v2_version='3', tags=song.tags)
+            audio.export(output_file, format='mp3', parameters=['-q:a', '0'], id3v2_version='3', tags=song.tags)
 
 
 class Album:
@@ -301,7 +301,7 @@ class Song:
         # let album artist fall back to artist
         self.set_tag(['album_artist', 'albumartist', 'artist'])
 
-        self.set_tag(['year', 'date'], self.format_year)
+        self.set_tag(['year', 'date', 'releasedate'], self.format_year)
 
         self.set_tag('title')
         self.set_tag('genre', self.format_genre)
@@ -324,7 +324,7 @@ class Song:
 
         # for all remaining tags, add key/value to output
         for tag in keys:
-            unused_tags += f"{tag}: {self.raw_tags[tag]}; "
+            unused_tags += f'{tag}: {self.raw_tags[tag]}; '
 
         return unused_tags
 
